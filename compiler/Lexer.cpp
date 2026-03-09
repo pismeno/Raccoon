@@ -32,7 +32,6 @@ namespace raccoon {
 
                 if (word == "let") tokens.push_back({TokenType::LET, word});
                 else if (word == "be") tokens.push_back({TokenType::BE, word});
-                else if (word == "int") tokens.push_back({TokenType::INTEGER, word});
                 else if (word == "return") tokens.push_back({TokenType::RETURN, word});
                 else tokens.push_back({TokenType::IDENTIFIER, word});
                 continue;

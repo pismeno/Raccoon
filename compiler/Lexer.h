@@ -7,7 +7,7 @@ namespace raccoon {
     enum class TokenType {
         LET, BE, EQUAL, NUMBER, IDENTIFIER,
         LPAREN, RPAREN, LBRACE, RBRACE, SEMICOLON, EOF_TOKEN,
-        INTEGER, RETURN
+        RETURN
     };
 
     struct Token {

@@ -3,7 +3,9 @@
 #include <llvm/IR/IRBuilder.h>
 #include <iostream>
 #include <memory>
-#include "Lexer.cpp"
+#include "Lexer.h"
+#include "Parser.h"
+#include "include/ASTPrinter.h"
 
 int main() {
     auto Context = std::make_unique<llvm::LLVMContext>();
@@ -20,6 +22,25 @@ int main() {
         std::cout << "Token Type: " << static_cast<int>(token.type)
                   << " | Lexeme: [" << token.lexeme << "]" << std::endl;
     }
+
+    raccoon::Parser parser(tokens);
+
+    try {
+        // 1. Get the AST root
+        std::unique_ptr<raccoon::BlockStmt> root = parser.parse();
+
+        // 2. Create the printer
+        raccoon::ASTPrinter printer;
+
+        // 3. Start the "walk"
+        std::cout << "--- Raccoon AST ---" << std::endl;
+        root->accept(printer);
+
+    } catch (const raccoon::ParseError& e) {
+        std::cerr << e.what() << std::endl;
+    }
+
+    return 0;
     
     return 0;
 }
