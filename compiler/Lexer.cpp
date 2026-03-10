@@ -23,6 +23,7 @@ namespace raccoon {
             if (c == '{') { tokens.push_back({TokenType::LBRACE, "{"}); cursor++; continue; }
             if (c == '}') { tokens.push_back({TokenType::RBRACE, "}"}); cursor++; continue; }
             if (c == ';') { tokens.push_back({TokenType::SEMICOLON, ";"}); cursor++; continue; }
+            if (c == ',') { tokens.push_back({TokenType::COMMA, ","}); cursor++; continue; }
 
             if (isalpha(c)) {
                 std::string word = "";

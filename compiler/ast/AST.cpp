@@ -1,7 +1,3 @@
-//
-// Created by kryst on 09.03.2026.
-//
-
 #include "../include/AST.h"
 #include "../include/ASTVisitor.h"
 
@@ -10,11 +6,15 @@ namespace raccoon {
         visitor.visit(*this);
     }
 
+    void BlockStmt::accept(ASTVisitor& visitor) {
+        visitor.visit(*this);
+    }
+
     void VariableDecl::accept(ASTVisitor& visitor) {
         visitor.visit(*this);
     }
 
-    void BlockStmt::accept(ASTVisitor& visitor) {
+    void FunctionDecl::accept(ASTVisitor &visitor) {
         visitor.visit(*this);
     }
 } // raccoon

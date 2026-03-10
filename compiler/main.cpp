@@ -14,7 +14,7 @@ int main() {
 
     Module->print(llvm::errs(), nullptr);
 
-    std::string source = "let main be ()int = () { let x be int = 10; return x; }";
+    std::string source = "let main be ()int = () { let x be int = 10; };";
     raccoon::Lexer lexer(source);
     auto tokens = lexer.tokenize();
 

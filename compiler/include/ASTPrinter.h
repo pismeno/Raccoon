@@ -11,8 +11,9 @@ namespace raccoon {
         ASTPrinter() : indentLevel(0) {}
 
         void visit(LiteralExpr& node) override;
-        void visit(VariableDecl& node) override;
         void visit(BlockStmt& node) override;
+        void visit(VariableDecl& node) override;
+        void visit(FunctionDecl& node) override;
 
     private:
         int indentLevel;

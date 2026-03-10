@@ -56,9 +56,12 @@ namespace raccoon {
         Token name = consume(TokenType::IDENTIFIER, "Expected variable name.");
         consume(TokenType::BE, "Expected 'be' after variable name.");
 
-        // Check for optional 'mut'
-        //bool isMutable = match(TokenType::MUT);
+        // Branching logic: Is this a function or a variable?
+        if (check(TokenType::LPAREN)) {
+            return functionDeclaration(name);
+        }
 
+        // --- Standard Variable Parsing ---
         Token type = consume(TokenType::IDENTIFIER, "Expected variable type.");
 
         std::unique_ptr<Expr> initializer = nullptr;
@@ -70,7 +73,37 @@ namespace raccoon {
         return std::make_unique<VariableDecl>(name.lexeme, type.lexeme, std::move(initializer));
     }
 
-    std::unique_ptr<Stmt> Parser::block() {
+    std::unique_ptr<Stmt> Parser::functionDeclaration(Token name) {
+        consume(TokenType::LPAREN, "Expected '(' for function type parameters.");
+        std::vector<std::string> paramTypes;
+        if (!check(TokenType::RPAREN)) {
+            do {
+                paramTypes.push_back(consume(TokenType::IDENTIFIER, "Expected parameter type.").lexeme);
+            } while (match(TokenType::COMMA));
+        }
+        consume(TokenType::RPAREN, "Expected ')' after function type parameters.");
+
+        Token returnType = consume(TokenType::IDENTIFIER, "Expected return type.");
+        consume(TokenType::EQUAL, "Expected '=' before function body.");
+
+        consume(TokenType::LPAREN, "Expected '(' for function parameters.");
+        std::vector<std::string> paramNames;
+        if (!check(TokenType::RPAREN)) {
+            do {
+                paramNames.push_back(consume(TokenType::IDENTIFIER, "Expected parameter name.").lexeme);
+            } while (match(TokenType::COMMA));
+        }
+        consume(TokenType::RPAREN, "Expected ')' after parameters.");
+
+        consume(TokenType::LBRACE, "Expected '{' before function body.");
+        std::unique_ptr<BlockStmt> body = block();
+
+        consume(TokenType::SEMICOLON, "Expected ';' after function declaration.");
+
+        return std::make_unique<FunctionDecl>(name.lexeme, paramTypes, returnType.lexeme, paramNames, std::move(body));
+    }
+
+    std::unique_ptr<BlockStmt> Parser::block() {
         std::vector<std::unique_ptr<Stmt>> statements;
         while (!check(TokenType::RBRACE) && !isAtEnd()) {
             statements.push_back(declaration());

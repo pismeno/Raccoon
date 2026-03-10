@@ -38,6 +38,15 @@ namespace raccoon {
         void accept(ASTVisitor& visitor) override;
     };
 
+    class BlockStmt : public Stmt {
+    public:
+        std::vector<std::unique_ptr<Stmt>> statements;
+
+        BlockStmt(std::vector<std::unique_ptr<Stmt>> statements): statements(std::move(statements)) {}
+
+        void accept(ASTVisitor& visitor) override;
+    };
+
     class VariableDecl : public Stmt {
     public:
         std::string name;
@@ -52,11 +61,20 @@ namespace raccoon {
         void accept(ASTVisitor& visitor) override;
     };
 
-    class BlockStmt : public Stmt {
-        public:
-        std::vector<std::unique_ptr<Stmt>> statements;
+    class FunctionDecl : public Stmt {
+    public:
+        std::string name;
+        std::vector<std::string> paramTypes;
+        std::string returnType;
+        std::vector<std::string> paramNames;
+        std::unique_ptr<BlockStmt> body;
 
-        BlockStmt(std::vector<std::unique_ptr<Stmt>> statements): statements(std::move(statements)) {}
+        FunctionDecl(std::string name, std::vector<std::string> paramTypes,
+                     std::string returnType, std::vector<std::string> paramNames,
+                     std::unique_ptr<BlockStmt> body)
+                : name(std::move(name)), paramTypes(std::move(paramTypes)),
+                  returnType(std::move(returnType)), paramNames(std::move(paramNames)),
+                  body(std::move(body)) {}
 
         void accept(ASTVisitor& visitor) override;
     };

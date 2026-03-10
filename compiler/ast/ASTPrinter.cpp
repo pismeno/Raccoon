@@ -38,6 +38,30 @@ namespace raccoon {
         }
     }
 
+    void ASTPrinter::visit(FunctionDecl& node) {
+        printIndent();
+        std::cout << "[FunctionDecl: name=" << node.name
+                  << ", returnType=" << node.returnType << ", params=(";
+
+        // Safely zip paramNames and paramTypes together for the output
+        for (size_t i = 0; i < node.paramNames.size(); ++i) {
+            std::cout << node.paramNames[i];
+            if (i < node.paramTypes.size()) {
+                std::cout << ": " << node.paramTypes[i];
+            }
+            if (i < node.paramNames.size() - 1) {
+                std::cout << ", ";
+            }
+        }
+        std::cout << ")]" << std::endl;
+
+        if (node.body) {
+            indentLevel++;
+            node.body->accept(*this);
+            indentLevel--;
+        }
+    }
+
     void ASTPrinter::visit(BlockStmt& node) {
         printIndent();
         std::cout << "[BlockStmt]" << std::endl;

@@ -6,7 +6,7 @@ namespace raccoon {
 
     enum class TokenType {
         LET, BE, EQUAL, NUMBER, IDENTIFIER,
-        LPAREN, RPAREN, LBRACE, RBRACE, SEMICOLON, EOF_TOKEN,
+        LPAREN, RPAREN, LBRACE, RBRACE, SEMICOLON, COMMA, EOF_TOKEN,
         RETURN
     };
 

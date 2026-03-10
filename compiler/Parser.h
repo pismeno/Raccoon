@@ -33,7 +33,8 @@ namespace raccoon {
         std::unique_ptr<Stmt> declaration();
         std::unique_ptr<Stmt> statement();
         std::unique_ptr<Stmt> varDeclaration();
-        std::unique_ptr<Stmt> block();
+        std::unique_ptr<Stmt> functionDeclaration(Token name);
+        std::unique_ptr<BlockStmt> block();
 
         std::unique_ptr<Expr> expression();
         std::unique_ptr<Expr> primary();
