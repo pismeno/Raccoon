@@ -18,7 +18,7 @@ int main() {
 
     Module->print(llvm::errs(), nullptr);
 
-    std::string source = "let x be int = 111111;";
+    std::string source = "let main be ()int = () {let x be int = 1;};";
     Lexer lexer(source);
     auto tokens = lexer.tokenize();
 
