@@ -1,7 +1,7 @@
-#include "../include/Lexer.h"
+#include "../include/Lexer.hpp"
 #include <cctype>
 
-namespace raccoon {
+namespace raccoon::compiler {
 
     Lexer::Lexer(std::string source) : source(std::move(source)) {}
 

@@ -1,20 +1,20 @@
-#include "../../include/AST.h"
-#include "../../include/ASTVisitor.h"
+#include "../../include/ast/AST.hpp"
+#include "../../include/ast/Visitor.hpp"
 
-namespace raccoon {
-    void LiteralExpr::accept(ASTVisitor& visitor) {
+namespace raccoon::compiler::ast {
+    void LiteralExpr::accept(Visitor& visitor) {
         visitor.visit(*this);
     }
 
-    void BlockStmt::accept(ASTVisitor& visitor) {
+    void BlockStmt::accept(Visitor& visitor) {
         visitor.visit(*this);
     }
 
-    void VariableDecl::accept(ASTVisitor& visitor) {
+    void VariableDecl::accept(Visitor& visitor) {
         visitor.visit(*this);
     }
 
-    void FunctionDecl::accept(ASTVisitor &visitor) {
+    void FunctionDecl::accept(Visitor &visitor) {
         visitor.visit(*this);
     }
 } // raccoon

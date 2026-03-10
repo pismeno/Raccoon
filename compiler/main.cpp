@@ -3,12 +3,15 @@
 #include <llvm/IR/IRBuilder.h>
 #include <iostream>
 #include <memory>
-#include "include/Lexer.h"
-#include "include/Parser.h"
-#include "include/ASTPrinter.h"
-#include "include/ASTSemanticAnalyzer.h"
+#include "include/Lexer.hpp"
+#include "include/Parser.hpp"
+#include "include/ast/Printer.hpp"
+#include "include/ast/SemanticAnalyzer.hpp"
 
 int main() {
+
+    using namespace raccoon::compiler;
+
     auto Context = std::make_unique<llvm::LLVMContext>();
     auto Module = std::make_unique<llvm::Module>("Raccoon", *Context);
     llvm::IRBuilder<> Builder(*Context);
@@ -16,7 +19,7 @@ int main() {
     Module->print(llvm::errs(), nullptr);
 
     std::string source = "let x be int = 111111;";
-    raccoon::Lexer lexer(source);
+    Lexer lexer(source);
     auto tokens = lexer.tokenize();
 
     for (const auto& token : tokens) {
@@ -24,20 +27,20 @@ int main() {
                   << " | Lexeme: [" << token.lexeme << "]" << std::endl;
     }
 
-    raccoon::Parser parser(tokens);
+    Parser parser(tokens);
 
     try {
-        std::unique_ptr<raccoon::BlockStmt> root = parser.parse();
+        std::unique_ptr<ast::BlockStmt> root = parser.parse();
 
-        raccoon::ASTSemanticAnalyzer semanticAnalyzer;
-        raccoon::ASTPrinter printer;
+        ast::SemanticAnalyzer semanticAnalyzer;
+        ast::Printer printer;
 
         root->accept(semanticAnalyzer);
 
         std::cout << "--- Raccoon AST ---" << std::endl;
         root->accept(printer);
 
-    } catch (const raccoon::ParseError& e) {
+    } catch (const ParseError& e) {
         std::cerr << e.what() << std::endl;
     }
 

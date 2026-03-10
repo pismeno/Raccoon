@@ -1,15 +1,15 @@
 #pragma once
 
-namespace raccoon {
+namespace raccoon::compiler::ast {
 
     class LiteralExpr;
     class BlockStmt;
     class VariableDecl;
     class FunctionDecl;
 
-    class ASTVisitor {
+    class Visitor {
     public:
-        virtual ~ASTVisitor() = default;
+        virtual ~Visitor() = default;
         virtual void visit(LiteralExpr& node) = 0;
         virtual void visit(BlockStmt& node) = 0;
         virtual void visit(VariableDecl& node) = 0;

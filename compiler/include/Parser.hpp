@@ -1,12 +1,14 @@
 #pragma once
 
-#include "Lexer.h"
-#include "AST.h"
+#include "Lexer.hpp"
+#include "ast/AST.hpp"
 #include <memory>
 #include <vector>
 #include <stdexcept>
 
-namespace raccoon {
+namespace raccoon::compiler {
+
+    using namespace ast;
 
     class ParseError : public std::runtime_error {
     public:

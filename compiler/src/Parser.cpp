@@ -1,6 +1,8 @@
-#include "../include/Parser.h"
+#include "../include/Parser.hpp"
 
-namespace raccoon {
+namespace raccoon::compiler {
+
+    using namespace ast;
 
     Parser::Parser(std::vector<Token> tokens) : tokens(std::move(tokens)) {}
 

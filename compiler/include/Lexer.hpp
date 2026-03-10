@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-namespace raccoon {
+namespace raccoon::compiler {
 
     enum class TokenType {
         LET, BE, EQUAL, NUMBER, IDENTIFIER,

@@ -1,14 +1,14 @@
 #pragma once
 
-#include "ASTVisitor.h"
-#include "Type.h"
+#include "Visitor.hpp"
+#include "../Type.hpp"
 #include <string>
 
-namespace raccoon {
+namespace raccoon::compiler::ast {
 
-    class ASTSemanticAnalyzer: public ASTVisitor {
+    class SemanticAnalyzer: public Visitor {
     public:
-        ASTSemanticAnalyzer();
+        SemanticAnalyzer() = default;
 
         void visit(LiteralExpr& node) override;
         void visit(BlockStmt& node) override;

@@ -1,14 +1,14 @@
 #include <iostream>
 #include <variant>
-#include "../../include/ASTPrinter.h"
+#include "../../include/ast/Printer.hpp"
 
-namespace raccoon {
+namespace raccoon::compiler::ast {
 
-    void ASTPrinter::printIndent() {
+    void Printer::printIndent() {
         for (int i = 0; i < indentLevel; ++i) std::cout << "  ";
     }
 
-    std::string ASTPrinter::formatLiteral(const LiteralValue& value) {
+    std::string Printer::formatLiteral(const LiteralValue& value) {
         return std::visit([](auto&& arg) -> std::string {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, bool>) {
@@ -21,12 +21,12 @@ namespace raccoon {
         }, value);
     }
 
-    void ASTPrinter::visit(LiteralExpr& node) {
+    void Printer::visit(LiteralExpr& node) {
         printIndent();
         std::cout << "[Literal: " << formatLiteral(node.value) << "]" << std::endl;
     }
 
-    void ASTPrinter::visit(VariableDecl& node) {
+    void Printer::visit(VariableDecl& node) {
         printIndent();
         std::cout << "[VariableDecl: name=" << node.name
                   << ", type=" << node.type << "]" << std::endl;
@@ -38,7 +38,7 @@ namespace raccoon {
         }
     }
 
-    void ASTPrinter::visit(FunctionDecl& node) {
+    void Printer::visit(FunctionDecl& node) {
         printIndent();
         std::cout << "[FunctionDecl: name=" << node.name
                   << ", returnType=" << node.returnType << ", params=(";
@@ -62,7 +62,7 @@ namespace raccoon {
         }
     }
 
-    void ASTPrinter::visit(BlockStmt& node) {
+    void Printer::visit(BlockStmt& node) {
         printIndent();
         std::cout << "[BlockStmt]" << std::endl;
         indentLevel++;

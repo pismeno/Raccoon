@@ -2,7 +2,8 @@
 
 #include <string>
 #include <unordered_map>
-namespace raccoon {
+
+namespace raccoon::compiler {
 
     enum class Type {
         UNKNOWN,

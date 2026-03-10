@@ -6,17 +6,17 @@
 #include <variant>
 #include <vector>
 
-namespace raccoon {
+namespace raccoon::compiler::ast {
 
     using LiteralValue = std::variant<int64_t, double, bool>;
 
-    class ASTVisitor;
+    class Visitor;
 
     class ASTNode {
     public:
         virtual ~ASTNode() = default;
 
-        virtual void accept(ASTVisitor& visitor) = 0;
+        virtual void accept(Visitor& visitor) = 0;
     };
 
     class Expr: public ASTNode {
@@ -35,7 +35,7 @@ namespace raccoon {
 
         explicit LiteralExpr(LiteralValue val) : value(std::move(val)) {}
 
-        void accept(ASTVisitor& visitor) override;
+        void accept(Visitor& visitor) override;
     };
 
     class BlockStmt : public Stmt {
@@ -44,7 +44,7 @@ namespace raccoon {
 
         BlockStmt(std::vector<std::unique_ptr<Stmt>> statements): statements(std::move(statements)) {}
 
-        void accept(ASTVisitor& visitor) override;
+        void accept(Visitor& visitor) override;
     };
 
     class VariableDecl : public Stmt {
@@ -58,7 +58,7 @@ namespace raccoon {
         type(std::move(type)),
         initializer(std::move(initializer)) {}
 
-        void accept(ASTVisitor& visitor) override;
+        void accept(Visitor& visitor) override;
     };
 
     class FunctionDecl : public Stmt {
@@ -76,6 +76,6 @@ namespace raccoon {
                   returnType(std::move(returnType)), paramNames(std::move(paramNames)),
                   body(std::move(body)) {}
 
-        void accept(ASTVisitor& visitor) override;
+        void accept(Visitor& visitor) override;
     };
 } // raccoon

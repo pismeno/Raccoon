@@ -1,10 +1,10 @@
-#include "../../include/ASTSemanticAnalyzer.h"
-#include "../../include/AST.h"
-#include "../../include/Parser.h"
+#include "../../include/ast/SemanticAnalyzer.hpp"
+#include "../../include/ast/AST.hpp"
+#include "../../include/Parser.hpp"
 
-namespace raccoon {
+namespace raccoon::compiler::ast {
 
-    void ASTSemanticAnalyzer::visit(LiteralExpr &node) {
+    void SemanticAnalyzer::visit(LiteralExpr &node) {
         std::visit([this](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
             if constexpr (std::is_same_v<T, int64_t>) this->lastType = Type::INT;
@@ -13,13 +13,13 @@ namespace raccoon {
         }, node.value);
     }
 
-    void ASTSemanticAnalyzer::visit(BlockStmt &node) {
+    void SemanticAnalyzer::visit(BlockStmt &node) {
         for (const auto& stmt : node.statements) {
             if (stmt) stmt->accept(*this);
         }
     }
 
-    void ASTSemanticAnalyzer::visit(VariableDecl &node) {
+    void SemanticAnalyzer::visit(VariableDecl &node) {
         Type declaredType = stringToType(node.type);
         if (declaredType == Type::UNKNOWN) throw ParseError("Unknown type: " + node.type);
 
@@ -32,9 +32,7 @@ namespace raccoon {
         }
     }
 
-    void ASTSemanticAnalyzer::visit(FunctionDecl &node) {
+    void SemanticAnalyzer::visit(FunctionDecl &node) {
 
     }
-
-    ASTSemanticAnalyzer::ASTSemanticAnalyzer() {}
 } // raccoon

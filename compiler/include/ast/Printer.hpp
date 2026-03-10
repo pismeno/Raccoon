@@ -1,14 +1,14 @@
 #pragma once
 
-#include "AST.h"
-#include "ASTVisitor.h"
+#include "AST.hpp"
+#include "Visitor.hpp"
 #include <string>
 
-namespace raccoon {
+namespace raccoon::compiler::ast {
 
-    class ASTPrinter : public ASTVisitor {
+    class Printer : public Visitor {
     public:
-        ASTPrinter() : indentLevel(0) {}
+        Printer() : indentLevel(0) {}
 
         void visit(LiteralExpr& node) override;
         void visit(BlockStmt& node) override;
