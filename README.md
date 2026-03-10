@@ -6,8 +6,9 @@ A language with the option to declare functions, variables and structs, it shoul
 # In future
 Standard library, classes (or at least structs that will be capable of provide some functionality that classes do), generics.
 # Languages, libraries
-Compiler:
-languge: C++
-libs: LLVM, ZLIB, Zstd
-Runtime:
+Compiler:  
+languge: C++  
+libs: LLVM, ZLIB, Zstd  
+  
+Runtime:  
 language: C
