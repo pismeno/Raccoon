@@ -1,6 +1,6 @@
 #include <iostream>
 #include <variant>
-#include "../include/ASTPrinter.h"
+#include "../../include/ASTPrinter.h"
 
 namespace raccoon {
 

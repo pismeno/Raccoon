@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Lexer.h"
-#include "include/AST.h"
+#include "AST.h"
 #include <memory>
 #include <vector>
 #include <stdexcept>
@@ -20,7 +20,6 @@ namespace raccoon {
         std::unique_ptr<BlockStmt> parse();
 
     private:
-        // Navigation helpers
         bool isAtEnd() const;
         Token peek() const;
         Token previous() const;
@@ -29,7 +28,6 @@ namespace raccoon {
         Token advance();
         Token consume(TokenType type, const std::string& message);
 
-        // Parsing Logic
         std::unique_ptr<Stmt> declaration();
         std::unique_ptr<Stmt> statement();
         std::unique_ptr<Stmt> varDeclaration();

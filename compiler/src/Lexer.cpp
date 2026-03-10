@@ -1,4 +1,4 @@
-#include "Lexer.h"
+#include "../include/Lexer.h"
 #include <cctype>
 
 namespace raccoon {

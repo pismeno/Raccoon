@@ -1,4 +1,4 @@
-#include "Parser.h"
+#include "../include/Parser.h"
 
 namespace raccoon {
 
@@ -12,7 +12,6 @@ namespace raccoon {
         return std::make_unique<BlockStmt>(std::move(statements));
     }
 
-// --- Navigation ---
 
     bool Parser::isAtEnd() const { return peek().type == TokenType::EOF_TOKEN; }
     Token Parser::peek() const { return tokens[current]; }
@@ -37,7 +36,6 @@ namespace raccoon {
         throw error(peek(), message);
     }
 
-// --- Parsing ---
 
     std::unique_ptr<Stmt> Parser::declaration() {
         if (match(TokenType::LET)) return varDeclaration();

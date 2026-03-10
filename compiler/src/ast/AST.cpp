@@ -1,5 +1,5 @@
-#include "../include/AST.h"
-#include "../include/ASTVisitor.h"
+#include "../../include/AST.h"
+#include "../../include/ASTVisitor.h"
 
 namespace raccoon {
     void LiteralExpr::accept(ASTVisitor& visitor) {
