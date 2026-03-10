@@ -6,6 +6,7 @@
 #include "include/Lexer.h"
 #include "include/Parser.h"
 #include "include/ASTPrinter.h"
+#include "include/ASTSemanticAnalyzer.h"
 
 int main() {
     auto Context = std::make_unique<llvm::LLVMContext>();
@@ -14,7 +15,7 @@ int main() {
 
     Module->print(llvm::errs(), nullptr);
 
-    std::string source = "let main be ()int = () { let x be int = 10; };";
+    std::string source = "let x be int = 111111;";
     raccoon::Lexer lexer(source);
     auto tokens = lexer.tokenize();
 
@@ -28,7 +29,10 @@ int main() {
     try {
         std::unique_ptr<raccoon::BlockStmt> root = parser.parse();
 
+        raccoon::ASTSemanticAnalyzer semanticAnalyzer;
         raccoon::ASTPrinter printer;
+
+        root->accept(semanticAnalyzer);
 
         std::cout << "--- Raccoon AST ---" << std::endl;
         root->accept(printer);
