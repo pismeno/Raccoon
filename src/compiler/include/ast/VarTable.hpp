@@ -5,14 +5,16 @@
 #include <map>
 #include <optional>
 #include <stdexcept>
+#include "llvm/IR/Value.h"
 
-namespace raccoon::compiler {
+namespace raccoon::compiler::ast {
 
     struct VarInfo {
         std::string name;
         std::string type;
         bool isImmutable;
         bool isGlobal;
+        llvm::Value* address = nullptr;
     };
 
     class VarTable {
@@ -23,13 +25,14 @@ namespace raccoon::compiler {
         void exitScope();
 
         void define(const std::string& name, const std::string& type, bool isImmutable);
-        std::optional<SymbolInfo> lookup(const std::string& name);
+        void define(const std::string& name, VarInfo info);
+        std::optional<VarInfo> lookup(const std::string& name);
 
         bool isAtGlobalScope() const;
         std::string getCurrentMangledPrefix() const;
 
     private:
-        std::vector<std::map<std::string, SymbolInfo>> scopes;
+        std::vector<std::map<std::string, VarInfo>> scopes;
         std::vector<std::string> activeDens;
     };
 

@@ -20,7 +20,7 @@ add_executable(Raccoon
         src/compiler/src/ast/Printer.cpp
         src/compiler/src/ast/SemanticAnalyzer.cpp
         src/compiler/src/ast/IRGenerator.cpp
-        src/compiler/src/ast/Expression.cpp
+        src/compiler/src/ast/VarTable.cpp
         src/compiler/src/Lexer.cpp
         src/compiler/src/Parser.cpp
 )

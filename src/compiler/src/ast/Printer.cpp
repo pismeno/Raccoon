@@ -72,4 +72,17 @@ namespace raccoon::compiler::ast {
         indentLevel--;
     }
 
+    void Printer::visit(DenStmt& node) {
+        printIndent();
+        std::cout << "[DenStmt: name=" << node.name << "]" << std::endl;
+
+        indentLevel++;
+        for (const auto& stmt : node.contents) {
+            if (stmt) {
+                stmt->accept(*this);
+            }
+        }
+        indentLevel--;
+    }
+
 } // namespace raccoon

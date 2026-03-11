@@ -33,7 +33,7 @@ namespace raccoon::compiler::ast {
     public:
         LiteralValue value;
 
-        explicit LiteralExpr(LiteralValue val) : value(std::move(val)) {}
+        explicit LiteralExpr(LiteralValue val) : value(val) {}
 
         void accept(Visitor& visitor) override;
     };
@@ -71,10 +71,12 @@ namespace raccoon::compiler::ast {
 
         FunctionDecl(std::string name, std::vector<std::string> paramTypes,
                      std::string returnType, std::vector<std::string> paramNames,
-                     std::unique_ptr<BlockStmt> body)
-                : name(std::move(name)), paramTypes(std::move(paramTypes)),
-                  returnType(std::move(returnType)), paramNames(std::move(paramNames)),
-                  body(std::move(body)) {}
+                     std::unique_ptr<BlockStmt> body):
+        name(std::move(name)),
+        paramTypes(std::move(paramTypes)),
+        returnType(std::move(returnType)),
+        paramNames(std::move(paramNames)),
+        body(std::move(body)) {}
 
         void accept(Visitor& visitor) override;
     };
@@ -89,5 +91,5 @@ namespace raccoon::compiler::ast {
         contents(std::move(contents)) {}
 
         void accept(Visitor& visitor) override;
-    }
+    };
 } // raccoon

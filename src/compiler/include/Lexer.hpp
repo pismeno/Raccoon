@@ -5,7 +5,7 @@
 namespace raccoon::compiler {
 
     enum class TokenType {
-        LET, BE, EQUAL, NUMBER, IDENTIFIER,
+        LET, BE, DEN, EQUAL, NUMBER, IDENTIFIER,
         LPAREN, RPAREN, LBRACE, RBRACE, SEMICOLON, COMMA, EOF_TOKEN,
         RETURN
     };

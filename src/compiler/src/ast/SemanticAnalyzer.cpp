@@ -1,5 +1,6 @@
-#include "../../include/ast/SemanticAnalyzer.hpp"
 #include "../../include/ast/AST.hpp"
+#include "../../include/ast/VarTable.hpp"
+#include "../../include/ast/SemanticAnalyzer.hpp"
 #include "../../include/Parser.hpp"
 
 namespace raccoon::compiler::ast {
@@ -14,9 +15,13 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(BlockStmt &node) {
+        varTable.enterScope();
+
         for (const auto& stmt : node.statements) {
             if (stmt) stmt->accept(*this);
         }
+
+        varTable.exitScope();
     }
 
     void SemanticAnalyzer::visit(VariableDecl &node) {
@@ -32,18 +37,41 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(FunctionDecl &node) {
-        Type returnType = checkType(node.returnType);
-        std::vector<Type> signatureTypes;
-        signatureTypes.reserve(node.paramTypes.size());
-        for (const auto& paramType : node.paramTypes) {
-                    signatureTypes.push_back(checkType(paramType));
+        std::string signature = "(";
+        for (size_t i = 0; i < node.paramTypes.size(); ++i) {
+            signature += node.paramTypes[i];
+            if (i < node.paramTypes.size() - 1) signature += ",";
+        }
+        signature += ")" + node.returnType;
+
+        varTable.define(node.name, signature, true);
+
+        if (node.body) {
+
+            varTable.enterScope();
+
+            for (size_t i = 0; i < node.paramNames.size(); ++i) {
+                varTable.define(node.paramNames[i], node.paramTypes[i], true);
+            }
+
+            for (const auto& stmt : node.body->statements) {
+                if (stmt) stmt->accept(*this);
+            }
+
+            varTable.exitScope();
+        } else {
+            throw ParseError("Expected body for function: " + node.name);
         }
     }
 
     void SemanticAnalyzer::visit(DenStmt &node) {
+        varTable.enterScope(node.name);
+
         for (const auto& stmt : node.contents) {
             if (stmt) stmt->accept(*this);
         }
+
+        varTable.exitScope();
     }
 
     Type SemanticAnalyzer::checkType(const std::string& declaredTypeStr) {

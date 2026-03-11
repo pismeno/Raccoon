@@ -31,7 +31,8 @@ namespace raccoon::compiler {
                     word += source[cursor++];
                 }
 
-                if (word == "let") tokens.push_back({TokenType::LET, word});
+                if (word == "den") tokens.push_back({TokenType::DEN, word});
+                else if (word == "let") tokens.push_back({TokenType::LET, word});
                 else if (word == "be") tokens.push_back({TokenType::BE, word});
                 else if (word == "return") tokens.push_back({TokenType::RETURN, word});
                 else tokens.push_back({TokenType::IDENTIFIER, word});

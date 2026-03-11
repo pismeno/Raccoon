@@ -1,7 +1,7 @@
 #include "../../include/ast/VarTable.hpp"
 #include <sstream>
 
-namespace raccoon::compiler {
+namespace raccoon::compiler::ast {
 
     VarTable::VarTable() {
         enterScope();
@@ -27,6 +27,10 @@ namespace raccoon::compiler {
         info.isImmutable = isImmutable;
         info.isGlobal = (scopes.size() == 2);
 
+        scopes.back()[name] = info;
+    }
+
+    void VarTable::define(const std::string& name, VarInfo info) {
         scopes.back()[name] = info;
     }
 

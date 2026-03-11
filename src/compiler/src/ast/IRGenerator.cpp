@@ -1,5 +1,5 @@
-#include "../../include/ast/IRGenerator.hpp"
 #include "../../include/ast/AST.hpp"
+#include "../../include/ast/IRGenerator.hpp"
 #include "../../include/Parser.hpp"
 
 namespace raccoon::compiler::ast {
@@ -28,11 +28,30 @@ namespace raccoon::compiler::ast {
     void IRGenerator::visit(VariableDecl& node) {
         llvm::Type* varType = getLLVMType(node.type);
 
-        llvm::AllocaInst* alloca = builder->CreateAlloca(varType, nullptr, node.name);
+        if (!builder->GetInsertBlock()) {
+            std::string mangledName = currentDen.empty() ? node.name : currentDen + "_" + node.name;
 
-        if (node.initializer) {
-            node.initializer->accept(*this);
-            builder->CreateStore(lastValue, alloca);
+            auto* globalVar = new llvm::GlobalVariable(
+                    *module, varType, false, llvm::GlobalValue::ExternalLinkage,
+                    llvm::Constant::getNullValue(varType), mangledName
+            );
+
+            VarInfo info {node.name, node.type, true, true, globalVar};
+            varTable.define(node.name, info);
+
+            if (node.initializer) {
+                node.initializer->accept(*this);
+            }
+        } else {
+            llvm::AllocaInst* alloca = builder->CreateAlloca(varType, nullptr, node.name);
+
+            VarInfo info {node.name, node.type, true, false, alloca};
+            varTable.define(node.name, info);
+
+            if (node.initializer) {
+                node.initializer->accept(*this);
+                builder->CreateStore(lastValue, alloca);
+            }
         }
     }
 
@@ -80,6 +99,19 @@ namespace raccoon::compiler::ast {
         }
 
         this->lastValue = func;
+    }
+
+    void IRGenerator::visit(DenStmt& node) {
+        std::string oldDen = currentDen;
+        currentDen = node.name;
+        varTable.enterScope(node.name);
+
+        for (const auto& stmt : node.contents) {
+            if (stmt) stmt->accept(*this);
+        }
+
+        varTable.exitScope();
+        currentDen = oldDen;
     }
 
     llvm::Type* IRGenerator::getLLVMType(const std::string& declaredTypeString) {

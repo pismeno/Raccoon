@@ -13,7 +13,7 @@ int main() {
 
     using namespace raccoon::compiler;
 
-    std::string source = "let main be ()int = () {let x be int = 1109;};";
+    std::string source = "den Main {let main be ()int = () {let x be int = 1109;};};";
     Lexer lexer(source);
     auto tokens = lexer.tokenize();
 

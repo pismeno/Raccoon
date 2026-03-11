@@ -2,6 +2,7 @@
 
 #include "Visitor.hpp"
 #include "../Type.hpp"
+#include "VarTable.hpp"
 #include <string>
 
 namespace raccoon::compiler::ast {
@@ -16,6 +17,7 @@ namespace raccoon::compiler::ast {
         void visit(FunctionDecl& node) override;
         void visit(DenStmt& node) override;
     private:
+        VarTable varTable;
         Type lastType = Type::UNKNOWN;
 
         static Type checkType(const std::string& declaredTypeStr);

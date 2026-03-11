@@ -41,6 +41,7 @@ namespace raccoon::compiler {
 
     std::unique_ptr<Stmt> Parser::declaration() {
         if (match(TokenType::LET)) return varDeclaration();
+        if (match(TokenType::DEN)) return denDeclaration();
         return statement();
     }
 
@@ -50,6 +51,20 @@ namespace raccoon::compiler {
         // If it's not a special statement, we assume it's an expression
         // For now, we'll just throw an error if it doesn't match anything
         throw error(peek(), "Expected statement or declaration.");
+    }
+
+    std::unique_ptr<Stmt> Parser::denDeclaration() {
+        Token name = consume(TokenType::IDENTIFIER, "Expected den name.");
+        consume(TokenType::LBRACE, "Expected '{' for den body.");
+        std::vector<std::unique_ptr<Stmt>> contents;
+        while (!check(TokenType::RBRACE) && !isAtEnd()) {
+            contents.push_back(declaration());
+        }
+        consume(TokenType::RBRACE, "Expect '}' after den body.");
+
+        consume(TokenType::SEMICOLON, "Expected ';' after den declaration.");
+
+        return std::make_unique<DenStmt>(name.lexeme, std::move(contents));
     }
 
     std::unique_ptr<Stmt> Parser::varDeclaration() {
