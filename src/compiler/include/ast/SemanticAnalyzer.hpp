@@ -16,6 +16,8 @@ namespace raccoon::compiler::ast {
         void visit(FunctionDecl& node) override;
     private:
         Type lastType = Type::UNKNOWN;
+
+        static Type checkType(const std::string& declaredTypeStr);
     };
 
 } // raccoon

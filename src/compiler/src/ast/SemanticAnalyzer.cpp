@@ -20,8 +20,7 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(VariableDecl &node) {
-        Type declaredType = stringToType(node.type);
-        if (declaredType == Type::UNKNOWN) throw ParseError("Unknown type: " + node.type);
+        Type declaredType = checkType(node.type);
 
         if (node.initializer) {
             node.initializer->accept(*this);
@@ -33,6 +32,17 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(FunctionDecl &node) {
+        Type returnType = checkType(node.returnType);
+        std::vector<Type> signatureTypes;
+        signatureTypes.reserve(node.paramTypes.size());
+        for (const auto& paramType : node.paramTypes) {
+                    signatureTypes.push_back(checkType(paramType));
+        }
+    }
 
+    Type SemanticAnalyzer::checkType(const std::string& declaredTypeStr) {
+        Type declaredType = stringToType(declaredTypeStr);
+        if (declaredType == Type::UNKNOWN) throw ParseError("Unknown type: " + declaredTypeStr);
+        return declaredType;
     }
 } // raccoon
