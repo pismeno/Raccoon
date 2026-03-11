@@ -17,4 +17,8 @@ namespace raccoon::compiler::ast {
     void FunctionDecl::accept(Visitor &visitor) {
         visitor.visit(*this);
     }
+
+    void DenStmt::accept(Visitor& visitor) {
+        visitor.visit(*this);
+    }
 } // raccoon

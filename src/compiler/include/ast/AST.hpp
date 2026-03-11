@@ -78,4 +78,16 @@ namespace raccoon::compiler::ast {
 
         void accept(Visitor& visitor) override;
     };
+
+    class DenStmt: public Stmt {
+    public:
+        std::string name;
+        std::vector<std::unique_ptr<Stmt>> contents;
+
+        DenStmt(std::string name, std::vector<std::unique_ptr<Stmt>> contents):
+        name(std::move(name)),
+        contents(std::move(contents)) {}
+
+        void accept(Visitor& visitor) override;
+    }
 } // raccoon

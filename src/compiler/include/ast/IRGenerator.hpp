@@ -16,6 +16,7 @@ namespace raccoon::compiler::ast {
         void visit(BlockStmt& node) override;
         void visit(VariableDecl& node) override;
         void visit(FunctionDecl& node) override;
+        void visit(DenStmt& node) override;
 
         std::unique_ptr<llvm::Module> module; // FIXME temporary in public
         std::unique_ptr<llvm::IRBuilder<>> builder;

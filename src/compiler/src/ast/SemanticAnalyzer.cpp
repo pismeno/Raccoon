@@ -40,6 +40,12 @@ namespace raccoon::compiler::ast {
         }
     }
 
+    void SemanticAnalyzer::visit(DenStmt &node) {
+        for (const auto& stmt : node.contents) {
+            if (stmt) stmt->accept(*this);
+        }
+    }
+
     Type SemanticAnalyzer::checkType(const std::string& declaredTypeStr) {
         Type declaredType = stringToType(declaredTypeStr);
         if (declaredType == Type::UNKNOWN) throw ParseError("Unknown type: " + declaredTypeStr);

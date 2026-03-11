@@ -14,6 +14,7 @@ namespace raccoon::compiler::ast {
         void visit(BlockStmt& node) override;
         void visit(VariableDecl& node) override;
         void visit(FunctionDecl& node) override;
+        void visit(DenStmt& node) override;
     private:
         Type lastType = Type::UNKNOWN;
 

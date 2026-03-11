@@ -6,6 +6,7 @@ namespace raccoon::compiler::ast {
     class BlockStmt;
     class VariableDecl;
     class FunctionDecl;
+    class DenStmt;
 
     class Visitor {
     public:
@@ -14,5 +15,6 @@ namespace raccoon::compiler::ast {
         virtual void visit(BlockStmt& node) = 0;
         virtual void visit(VariableDecl& node) = 0;
         virtual void visit(FunctionDecl& node) = 0;
+        virtual void visit(DenStmt& node) = 0;
     };
 }
