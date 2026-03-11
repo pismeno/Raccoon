@@ -7,18 +7,13 @@
 #include "include/Parser.hpp"
 #include "include/ast/Printer.hpp"
 #include "include/ast/SemanticAnalyzer.hpp"
+#include "include/ast/IRGenerator.hpp"
 
 int main() {
 
     using namespace raccoon::compiler;
 
-    auto Context = std::make_unique<llvm::LLVMContext>();
-    auto Module = std::make_unique<llvm::Module>("Raccoon", *Context);
-    llvm::IRBuilder<> Builder(*Context);
-
-    Module->print(llvm::errs(), nullptr);
-
-    std::string source = "let main be ()int = () {let x be int = 1;};";
+    std::string source = "let main be ()int = () {let x be int = 1109;};";
     Lexer lexer(source);
     auto tokens = lexer.tokenize();
 
@@ -34,11 +29,16 @@ int main() {
 
         ast::SemanticAnalyzer semanticAnalyzer;
         ast::Printer printer;
+        ast::IRGenerator irGenerator;
 
         root->accept(semanticAnalyzer);
 
         std::cout << "--- Raccoon AST ---" << std::endl;
         root->accept(printer);
+
+        std::cout << "--- Raccoon IR ---" << std::endl;
+        root->accept(irGenerator);
+        irGenerator.module->print(llvm::outs(), nullptr);
 
     } catch (const ParseError& e) {
         std::cerr << e.what() << std::endl;
