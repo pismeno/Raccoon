@@ -18,6 +18,10 @@ namespace raccoon::compiler {
             }
 
             if (c == '=') { tokens.push_back({TokenType::EQUAL, "="}); cursor++; continue; }
+            if (c == '+') { tokens.push_back({TokenType::PLUS, "+"}); cursor++; continue; }
+            if (c == '-') { tokens.push_back({TokenType::MINUS, "-"}); cursor++; continue; }
+            if (c == '*') { tokens.push_back({TokenType::TIMES, "*"}); cursor++; continue; }
+            if (c == '/') { tokens.push_back({TokenType::SLASH, "/"}); cursor++; continue; }
             if (c == '(') { tokens.push_back({TokenType::LPAREN, "("}); cursor++; continue; }
             if (c == ')') { tokens.push_back({TokenType::RPAREN, ")"}); cursor++; continue; }
             if (c == '{') { tokens.push_back({TokenType::LBRACE, "{"}); cursor++; continue; }

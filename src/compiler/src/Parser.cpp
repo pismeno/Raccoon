@@ -128,7 +128,41 @@ namespace raccoon::compiler {
     }
 
     std::unique_ptr<Expr> Parser::expression() {
+        return term();
+    }
+
+    std::unique_ptr<Expr> Parser::unary() {
+        if (match(TokenType::MINUS)) {
+            std::string op = previous().lexeme;
+            std::unique_ptr<Expr> right = unary();
+            return std::make_unique<UnaryExpression>(op, std::move(right));
+        }
+
         return primary();
+    }
+
+    std::unique_ptr<Expr> Parser::term() {
+        std::unique_ptr<Expr> left = factor();
+
+        while (match(TokenType::PLUS) || match(TokenType::MINUS)) {
+            std::string op = previous().lexeme;
+            std::unique_ptr<Expr> right = factor();
+            left = std::make_unique<BinaryExpression>(op, std::move(left), std::move(right));
+        }
+
+        return left;
+    }
+
+    std::unique_ptr<Expr> Parser::factor() {
+        std::unique_ptr<Expr> left = unary();
+
+        while (match(TokenType::TIMES) || match(TokenType::SLASH)) {
+            std::string op = previous().lexeme;
+            std::unique_ptr<Expr> right = unary();
+            left = std::make_unique<BinaryExpression>(op, std::move(left), std::move(right));
+        }
+
+        return left;
     }
 
     std::unique_ptr<Expr> Parser::primary() {
@@ -145,6 +179,13 @@ namespace raccoon::compiler {
         if (match(TokenType::IDENTIFIER)) {
             std::string name = previous().lexeme;
             return std::make_unique<VariableExpr>(name);
+        }
+
+        // --- Added: Parentheses Grouping ---
+        if (match(TokenType::LPAREN)) {
+            std::unique_ptr<Expr> expr = expression(); // Start from the top
+            consume(TokenType::RPAREN, "Expected ')' after expression.");
+            return expr;
         }
 
         throw error(peek(), "Expected expression.");

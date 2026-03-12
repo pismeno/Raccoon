@@ -20,6 +20,42 @@ namespace raccoon::compiler::ast {
         this->lastType = varInfo->type;
     }
 
+    void SemanticAnalyzer::visit(UnaryExpression &node) {
+        if (node.expr) node.expr->accept(*this);
+        std::shared_ptr<Type> rightType = this->lastType;
+
+        if (node.op == "-") {
+            if (rightType->getKind() != TypeKind::INT && rightType->getKind() != TypeKind::FLOAT) {
+                throw ParseError("Type mismatch: Cannot negate a non-numeric type.");
+            }
+        } else if (node.op == "!") {
+            if (rightType->getKind() != TypeKind::BOOL) {
+                throw ParseError("Type mismatch: Cannot use '!' on a non-boolean type.");
+            }
+        }
+
+        this->lastType = rightType;
+    }
+
+    void SemanticAnalyzer::visit(BinaryExpression &node) {
+        if (node.left) node.left->accept(*this);
+        std::shared_ptr<Type> leftType = this->lastType;
+
+        if (node.right) node.right->accept(*this);
+        std::shared_ptr<Type> rightType = this->lastType;
+
+        if (!leftType || !rightType) {
+            throw ParseError("Invalid expression types.");
+        }
+
+        if (!(*leftType == *rightType)) {
+            throw ParseError("Type mismatch: Cannot operate on " +
+                typeToString(leftType.get()) + " and " + typeToString(rightType.get()));
+        }
+
+        this->lastType = leftType;
+    }
+
     void SemanticAnalyzer::visit(BlockStmt &node) {
         varTable.enterScope();
 

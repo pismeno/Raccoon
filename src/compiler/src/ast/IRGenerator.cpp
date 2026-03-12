@@ -31,6 +31,56 @@ namespace raccoon::compiler::ast {
         }
     }
 
+    void IRGenerator::visit(UnaryExpression& node) {
+        if (node.expr) node.expr->accept(*this);
+        llvm::Value* operandValue = this->lastValue;
+
+        if (!operandValue) {
+            throw ParseError("Failed to generate IR for unary operand.");
+        }
+
+        bool isFloat = operandValue->getType()->isFloatingPointTy();
+
+        if (node.op == "-") {
+            this->lastValue = isFloat ? builder->CreateFNeg(operandValue, "negtmp")
+                                      : builder->CreateNeg(operandValue, "negtmp");
+        } else if (node.op == "!") {
+            this->lastValue = builder->CreateNot(operandValue, "nottmp");
+        } else {
+            throw ParseError("Unknown unary operator: " + node.op);
+        }
+    }
+
+    void IRGenerator::visit(BinaryExpression& node) {
+        if (node.left) node.left->accept(*this);
+        llvm::Value* leftValue = this->lastValue;
+
+        if (node.right) node.right->accept(*this);
+        llvm::Value* rightValue = this->lastValue;
+
+        if (!leftValue || !rightValue) {
+            throw ParseError("Failed to generate IR for binary operands.");
+        }
+
+        bool isFloat = leftValue->getType()->isFloatingPointTy();
+
+        if (node.op == "+") {
+            this->lastValue = isFloat ? builder->CreateFAdd(leftValue, rightValue, "addtmp")
+                                      : builder->CreateAdd(leftValue, rightValue, "addtmp");
+        } else if (node.op == "-") {
+            this->lastValue = isFloat ? builder->CreateFSub(leftValue, rightValue, "subtmp")
+                                      : builder->CreateSub(leftValue, rightValue, "subtmp");
+        } else if (node.op == "*") {
+            this->lastValue = isFloat ? builder->CreateFMul(leftValue, rightValue, "multmp")
+                                      : builder->CreateMul(leftValue, rightValue, "multmp");
+        } else if (node.op == "/") {
+            this->lastValue = isFloat ? builder->CreateFDiv(leftValue, rightValue, "divtmp")
+                                      : builder->CreateSDiv(leftValue, rightValue, "divtmp");
+        } else {
+            throw ParseError("Unknown binary operator: " + node.op);
+        }
+    }
+
     void IRGenerator::visit(BlockStmt& node) {
         for (const auto& stmt : node.statements) {
             if (stmt) stmt->accept(*this);

@@ -47,6 +47,32 @@ namespace raccoon::compiler::ast {
         void accept(Visitor& visitor) override;
     };
 
+    class UnaryExpression : public Expr {
+    public:
+        std::string op;
+        std::unique_ptr<Expr> expr;
+
+        UnaryExpression(std::string op, std::unique_ptr<Expr> expr) :
+        op(std::move(op)),
+        expr(std::move(expr)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
+    class BinaryExpression : public Expr {
+    public:
+        std::string op;
+        std::unique_ptr<Expr> left;
+        std::unique_ptr<Expr> right;
+
+        BinaryExpression(std::string op, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right) :
+        op(std::move(op)),
+        left(std::move(left)),
+        right(std::move(right)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
     class BlockStmt : public Stmt {
     public:
         std::vector<std::unique_ptr<Stmt>> statements;

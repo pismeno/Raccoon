@@ -43,6 +43,31 @@ namespace raccoon::compiler::ast {
         }
     }
 
+    void Printer::visit(UnaryExpression& node) {
+        printIndent();
+        std::cout << "[UnaryExpr: op='" << node.op << "']" << std::endl;
+
+        indentLevel++;
+        if (node.expr) {
+            node.expr->accept(*this);
+        }
+        indentLevel--;
+    }
+
+    void Printer::visit(BinaryExpression& node) {
+        printIndent();
+        std::cout << "[BinaryExpr: op='" << node.op << "']" << std::endl;
+
+        indentLevel++;
+        if (node.left) {
+            node.left->accept(*this);
+        }
+        if (node.right) {
+            node.right->accept(*this);
+        }
+        indentLevel--;
+    }
+
     void Printer::visit(FunctionDecl& node) {
         printIndent();
         std::cout << "[FunctionDecl: name=" << node.name
