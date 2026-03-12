@@ -36,7 +36,8 @@ namespace raccoon::compiler::ast {
                     llvm::Constant::getNullValue(varType), mangledName
             );
 
-            VarInfo info {node.name, node.type, true, true, globalVar};
+            std::shared_ptr<Type> nodeType = stringToType(node.type);
+            VarInfo info {node.name, nodeType, true, true, globalVar};
             varTable.define(node.name, info);
 
             if (node.initializer) {
@@ -45,7 +46,8 @@ namespace raccoon::compiler::ast {
         } else {
             llvm::AllocaInst* alloca = builder->CreateAlloca(varType, nullptr, node.name);
 
-            VarInfo info {node.name, node.type, true, false, alloca};
+            std::shared_ptr<Type> nodeType = stringToType(node.type);
+            VarInfo info {node.name, nodeType, true, false, alloca};
             varTable.define(node.name, info);
 
             if (node.initializer) {
@@ -115,11 +117,11 @@ namespace raccoon::compiler::ast {
     }
 
     llvm::Type* IRGenerator::getLLVMType(const std::string& declaredTypeString) {
-        Type raccoonType = stringToType(declaredTypeString);
-        if (raccoonType == Type::VOID)   return builder->getVoidTy();
-        if (raccoonType == Type::INT)    return builder->getInt64Ty();
-        if (raccoonType == Type::FLOAT) return builder->getDoubleTy();
-        if (raccoonType == Type::BOOL)   return builder->getInt1Ty();
+        TypeKind raccoonType = stringToTypeKind(declaredTypeString);
+        if (raccoonType == TypeKind::VOID)   return builder->getVoidTy();
+        if (raccoonType == TypeKind::INT)    return builder->getInt64Ty();
+        if (raccoonType == TypeKind::FLOAT) return builder->getDoubleTy();
+        if (raccoonType == TypeKind::BOOL)   return builder->getInt1Ty();
         return builder->getInt32Ty();
     }
 } // raccoon

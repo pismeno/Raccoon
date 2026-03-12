@@ -6,12 +6,13 @@
 #include <optional>
 #include <stdexcept>
 #include "llvm/IR/Value.h"
+#include "Type.hpp"
 
 namespace raccoon::compiler::ast {
 
     struct VarInfo {
         std::string name;
-        std::string type;
+        std::shared_ptr<Type> type;
         bool isImmutable;
         bool isGlobal;
         llvm::Value* address = nullptr;
@@ -24,7 +25,7 @@ namespace raccoon::compiler::ast {
         void enterScope(const std::string& denName = "");
         void exitScope();
 
-        void define(const std::string& name, const std::string& type, bool isImmutable);
+        void define(const std::string& name, const std::shared_ptr<Type>, bool isImmutable);
         void define(const std::string& name, VarInfo info);
         std::optional<VarInfo> lookup(const std::string& name);
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Visitor.hpp"
-#include "../Type.hpp"
+#include "Type.hpp"
 #include "VarTable.hpp"
 #include <string>
 
@@ -18,9 +18,9 @@ namespace raccoon::compiler::ast {
         void visit(DenStmt& node) override;
     private:
         VarTable varTable;
-        Type lastType = Type::UNKNOWN;
+        std::shared_ptr<Type> lastType = PrimitiveType::Unknown;
 
-        static Type checkType(const std::string& declaredTypeStr);
+        static std::shared_ptr<Type> checkType(const std::string& declaredTypeStr);
     };
 
 } // raccoon

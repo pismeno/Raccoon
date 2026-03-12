@@ -20,7 +20,7 @@ namespace raccoon::compiler::ast {
         }
     }
 
-    void VarTable::define(const std::string& name, const std::string& type, bool isImmutable) {
+    void VarTable::define(const std::string& name, const std::shared_ptr<Type> type, bool isImmutable) {
         VarInfo info;
         info.name = name;
         info.type = type;

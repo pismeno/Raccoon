@@ -14,16 +14,15 @@ find_library(ZSTD_LIB NAMES zstd REQUIRED)
 add_definitions(${LLVM_DEFINITIONS})
 include_directories(${LLVM_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS})
 
-add_executable(Raccoon
-        src/compiler/main.cpp
-        src/compiler/src/ast/AST.cpp
-        src/compiler/src/ast/Printer.cpp
-        src/compiler/src/ast/SemanticAnalyzer.cpp
-        src/compiler/src/ast/IRGenerator.cpp
-        src/compiler/src/ast/VarTable.cpp
-        src/compiler/src/Lexer.cpp
-        src/compiler/src/Parser.cpp
-)
+# 1. Collect all .cpp files recursively from the src/compiler directory
+file(GLOB_RECURSE COMPILER_SOURCES "src/compiler/*.cpp")
+
+# 2. Add the executable using the collected list
+add_executable(Raccoon ${COMPILER_SOURCES})
+
+# 3. (Optional) Helpful for many IDEs to see the headers too
+file(GLOB_RECURSE COMPILER_HEADERS "src/compiler/*.hpp" "src/compiler/*.h")
+target_sources(Raccoon PRIVATE ${COMPILER_HEADERS})
 
 llvm_map_components_to_libnames(llvm_libs
         support

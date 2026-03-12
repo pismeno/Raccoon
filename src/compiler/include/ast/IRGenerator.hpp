@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Visitor.hpp"
-#include "../Type.hpp"
+#include "Type.hpp"
 #include "VarTable.hpp"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"

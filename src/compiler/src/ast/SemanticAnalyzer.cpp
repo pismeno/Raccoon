@@ -8,9 +8,9 @@ namespace raccoon::compiler::ast {
     void SemanticAnalyzer::visit(LiteralExpr &node) {
         std::visit([this](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
-            if constexpr (std::is_same_v<T, int64_t>) this->lastType = Type::INT;
-            else if constexpr (std::is_same_v<T, double>) this->lastType = Type::FLOAT;
-            else if constexpr (std::is_same_v<T, bool>)   this->lastType = Type::BOOL;
+            if constexpr (std::is_same_v<T, int64_t>) this->lastType = PrimitiveType::Int;
+            else if constexpr (std::is_same_v<T, double>) this->lastType = PrimitiveType::Float;
+            else if constexpr (std::is_same_v<T, bool>)   this->lastType = PrimitiveType::Bool;
         }, node.value);
     }
 
@@ -25,24 +25,29 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(VariableDecl &node) {
-        Type declaredType = checkType(node.type);
+        std::shared_ptr<Type> declaredType = checkType(node.type);
 
         if (node.initializer) {
             node.initializer->accept(*this);
 
-            if (this->lastType != declaredType) {
-                throw ParseError("Type mismatch: Cannot assign " + typeToString(lastType) + " to " + node.type);
+            if (!(*this->lastType == *declaredType)) {
+                throw ParseError("Type mismatch: Cannot assign " + typeToString(lastType.get()) + " to " + node.type);
             }
         }
+
+        varTable.define(node.name, declaredType, true);
     }
 
     void SemanticAnalyzer::visit(FunctionDecl &node) {
-        std::string signature = "(";
-        for (size_t i = 0; i < node.paramTypes.size(); ++i) {
-            signature += node.paramTypes[i];
-            if (i < node.paramTypes.size() - 1) signature += ",";
+
+        std::shared_ptr<Type> returnType = checkType(node.returnType);
+        std::vector<std::shared_ptr<Type>> paramTypes;
+        paramTypes.reserve(node.paramTypes.size());
+        for (const auto& paramType : node.paramTypes) {
+                    paramTypes.push_back(checkType(paramType));
         }
-        signature += ")" + node.returnType;
+
+        std::shared_ptr<FunctionType> signature = FunctionType::make(returnType, paramTypes);
 
         varTable.define(node.name, signature, true);
 
@@ -51,7 +56,7 @@ namespace raccoon::compiler::ast {
             varTable.enterScope();
 
             for (size_t i = 0; i < node.paramNames.size(); ++i) {
-                varTable.define(node.paramNames[i], node.paramTypes[i], true);
+                varTable.define(node.paramNames[i], paramTypes[i], true);
             }
 
             for (const auto& stmt : node.body->statements) {
@@ -74,9 +79,9 @@ namespace raccoon::compiler::ast {
         varTable.exitScope();
     }
 
-    Type SemanticAnalyzer::checkType(const std::string& declaredTypeStr) {
-        Type declaredType = stringToType(declaredTypeStr);
-        if (declaredType == Type::UNKNOWN) throw ParseError("Unknown type: " + declaredTypeStr);
+    std::shared_ptr<Type> SemanticAnalyzer::checkType(const std::string& declaredTypeStr) {
+        std::shared_ptr<Type> declaredType = stringToType(declaredTypeStr);
+        if (declaredType == nullptr) throw ParseError("Unknown type: " + declaredTypeStr);
         return declaredType;
     }
 } // raccoon
