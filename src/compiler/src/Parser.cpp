@@ -142,6 +142,11 @@ namespace raccoon::compiler {
             }
         }
 
+        if (match(TokenType::IDENTIFIER)) {
+            std::string name = previous().lexeme;
+            return std::make_unique<VariableExpr>(name);
+        }
+
         throw error(peek(), "Expected expression.");
     }
 

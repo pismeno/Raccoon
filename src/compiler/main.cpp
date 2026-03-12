@@ -1,6 +1,4 @@
-#include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
-#include <llvm/IR/IRBuilder.h>
 #include <iostream>
 #include <memory>
 #include "include/Lexer.hpp"
@@ -13,7 +11,7 @@ int main() {
 
     using namespace raccoon::compiler;
 
-    std::string source = "den Main {let main be ()int = () {let x be int = 1109;};};";
+    std::string source = "den Main {let main be ()int = () {let x be int = 1109; let y be int = x; };};";
     Lexer lexer(source);
     auto tokens = lexer.tokenize();
 

@@ -19,6 +19,18 @@ namespace raccoon::compiler::ast {
         }, node.value);
     }
 
+    void IRGenerator::visit(VariableExpr& node) {
+        std::optional<VarInfo> varInfo = varTable.lookup(node.name);
+        if (!varInfo) throw ParseError("Undefined variable: " + node.name);
+
+        if (builder->GetInsertBlock()) {
+            llvm::Type* loadType = getLLVMType(varInfo->type);
+            this->lastValue = builder->CreateLoad(loadType, varInfo->address, node.name.c_str());
+        } else {
+            this->lastValue = varInfo->address;
+        }
+    }
+
     void IRGenerator::visit(BlockStmt& node) {
         for (const auto& stmt : node.statements) {
             if (stmt) stmt->accept(*this);
@@ -26,27 +38,32 @@ namespace raccoon::compiler::ast {
     }
 
     void IRGenerator::visit(VariableDecl& node) {
-        llvm::Type* varType = getLLVMType(node.type);
+        std::shared_ptr<Type> nodeType = stringToType(node.type);
+        llvm::Type* varType = getLLVMType(nodeType);
 
         if (!builder->GetInsertBlock()) {
             std::string mangledName = currentDen.empty() ? node.name : currentDen + "_" + node.name;
 
-            auto* globalVar = new llvm::GlobalVariable(
-                    *module, varType, false, llvm::GlobalValue::ExternalLinkage,
-                    llvm::Constant::getNullValue(varType), mangledName
-            );
-
-            std::shared_ptr<Type> nodeType = stringToType(node.type);
-            VarInfo info {node.name, nodeType, true, true, globalVar};
-            varTable.define(node.name, info);
-
+            llvm::Constant* initConst = llvm::Constant::getNullValue(varType);
             if (node.initializer) {
                 node.initializer->accept(*this);
+                if (auto* c = llvm::dyn_cast<llvm::Constant>(lastValue)) {
+                    initConst = c;
+                } else {
+                    throw ParseError("Global initializer must be a constant.");
+                }
             }
+
+            auto* globalVar = new llvm::GlobalVariable(
+                    *module, varType, false, llvm::GlobalValue::ExternalLinkage,
+                    initConst, mangledName
+            );
+
+            VarInfo info {node.name, nodeType, true, true, globalVar};
+            varTable.define(node.name, info);
         } else {
             llvm::AllocaInst* alloca = builder->CreateAlloca(varType, nullptr, node.name);
 
-            std::shared_ptr<Type> nodeType = stringToType(node.type);
             VarInfo info {node.name, nodeType, true, false, alloca};
             varTable.define(node.name, info);
 
@@ -59,12 +76,11 @@ namespace raccoon::compiler::ast {
 
     void IRGenerator::visit(FunctionDecl &node) {
         std::vector<llvm::Type*> paramTypes;
-        for (const auto& pType : node.paramTypes) {
-            paramTypes.push_back(getLLVMType(pType));
+        for (const auto& pTypeStr : node.paramTypes) {
+            paramTypes.push_back(getLLVMType(stringToType(pTypeStr)));
         }
 
-        llvm::Type* retType = getLLVMType(node.returnType);
-
+        llvm::Type* retType = getLLVMType(stringToType(node.returnType));
         llvm::FunctionType* funcType = llvm::FunctionType::get(retType, paramTypes, false);
 
         llvm::Function* func = llvm::Function::Create(
@@ -72,17 +88,24 @@ namespace raccoon::compiler::ast {
         );
 
         llvm::BasicBlock* backupBlock = builder->GetInsertBlock();
-
         llvm::BasicBlock* entry = llvm::BasicBlock::Create(*context, "entry", func);
         builder->SetInsertPoint(entry);
 
+        varTable.enterScope();
+
         size_t idx = 0;
         for (auto& arg : func->args()) {
-            std::string argName = node.paramNames[idx++];
+            std::string argName = node.paramNames[idx];
             arg.setName(argName);
 
             llvm::AllocaInst* alloca = builder->CreateAlloca(arg.getType(), nullptr, argName);
             builder->CreateStore(&arg, alloca);
+
+            std::shared_ptr<Type> pType = stringToType(node.paramTypes[idx]);
+            VarInfo info {argName, pType, true, false, alloca};
+            varTable.define(argName, info);
+
+            idx++;
         }
 
         if (node.body) {
@@ -93,6 +116,8 @@ namespace raccoon::compiler::ast {
             if (retType->isVoidTy()) builder->CreateRetVoid();
             else builder->CreateRet(llvm::Constant::getNullValue(retType));
         }
+
+        varTable.exitScope();
 
         if (backupBlock) {
             builder->SetInsertPoint(backupBlock);
@@ -116,12 +141,15 @@ namespace raccoon::compiler::ast {
         currentDen = oldDen;
     }
 
-    llvm::Type* IRGenerator::getLLVMType(const std::string& declaredTypeString) {
-        TypeKind raccoonType = stringToTypeKind(declaredTypeString);
-        if (raccoonType == TypeKind::VOID)   return builder->getVoidTy();
-        if (raccoonType == TypeKind::INT)    return builder->getInt64Ty();
-        if (raccoonType == TypeKind::FLOAT) return builder->getDoubleTy();
-        if (raccoonType == TypeKind::BOOL)   return builder->getInt1Ty();
-        return builder->getInt32Ty();
+    llvm::Type* IRGenerator::getLLVMType(std::shared_ptr<Type> type) {
+        if (!type) return builder->getVoidTy();
+
+        switch (type->getKind()) {
+            case TypeKind::VOID:   return builder->getVoidTy();
+            case TypeKind::INT:    return builder->getInt64Ty();
+            case TypeKind::FLOAT:  return builder->getDoubleTy();
+            case TypeKind::BOOL:   return builder->getInt1Ty();
+            default:               return builder->getInt32Ty();
+        }
     }
-} // raccoon
+} // namespace raccoon

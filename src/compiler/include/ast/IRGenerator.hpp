@@ -14,6 +14,7 @@ namespace raccoon::compiler::ast {
         IRGenerator();
 
         void visit(LiteralExpr& node) override;
+        void visit(VariableExpr& node) override;
         void visit(BlockStmt& node) override;
         void visit(VariableDecl& node) override;
         void visit(FunctionDecl& node) override;
@@ -27,7 +28,7 @@ namespace raccoon::compiler::ast {
         std::string currentDen = "";
         llvm::Value* lastValue = nullptr;
 
-        llvm::Type* getLLVMType(const std::string& declaredTypeString);
+        llvm::Type* getLLVMType(std::shared_ptr<Type> type);
     };
 
 } // raccoon

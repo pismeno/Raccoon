@@ -6,6 +6,10 @@ namespace raccoon::compiler::ast {
         visitor.visit(*this);
     }
 
+    void VariableExpr::accept(Visitor& visitor) {
+        visitor.visit(*this);
+    }
+
     void BlockStmt::accept(Visitor& visitor) {
         visitor.visit(*this);
     }

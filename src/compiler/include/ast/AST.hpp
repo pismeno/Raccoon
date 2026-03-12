@@ -38,6 +38,15 @@ namespace raccoon::compiler::ast {
         void accept(Visitor& visitor) override;
     };
 
+    class VariableExpr : public Expr {
+        public:
+        std::string name;
+
+        VariableExpr(std::string name) : name(std::move(name)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
     class BlockStmt : public Stmt {
     public:
         std::vector<std::unique_ptr<Stmt>> statements;

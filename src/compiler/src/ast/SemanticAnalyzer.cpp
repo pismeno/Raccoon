@@ -14,6 +14,12 @@ namespace raccoon::compiler::ast {
         }, node.value);
     }
 
+    void SemanticAnalyzer::visit(VariableExpr &node) {
+        std::optional<VarInfo> varInfo = varTable.lookup(node.name);
+        if (!varInfo) throw ParseError("Undefined variable: " + node.name);
+        this->lastType = varInfo->type;
+    }
+
     void SemanticAnalyzer::visit(BlockStmt &node) {
         varTable.enterScope();
 

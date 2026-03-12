@@ -26,6 +26,11 @@ namespace raccoon::compiler::ast {
         std::cout << "[Literal: " << formatLiteral(node.value) << "]" << std::endl;
     }
 
+    void Printer::visit(VariableExpr& node) {
+        printIndent();
+        std::cout << "[Variable: " << node.name << "]" << std::endl;
+    }
+
     void Printer::visit(VariableDecl& node) {
         printIndent();
         std::cout << "[VariableDecl: name=" << node.name
