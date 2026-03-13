@@ -84,12 +84,14 @@ namespace raccoon::compiler::ast {
 
     class VariableDecl : public Stmt {
     public:
+        bool isMutable;
         std::string name;
         std::string type;
         std::unique_ptr<Expr> initializer;
 
-        VariableDecl(std::string name, std::string type, std::unique_ptr<Expr> initializer):
+        VariableDecl(std::string name, bool isMutable, std::string type, std::unique_ptr<Expr> initializer):
         name(std::move(name)),
+        isMutable(isMutable),
         type(std::move(type)),
         initializer(std::move(initializer)) {}
 
@@ -98,16 +100,18 @@ namespace raccoon::compiler::ast {
 
     class FunctionDecl : public Stmt {
     public:
+        bool isMutable;
         std::string name;
         std::vector<std::string> paramTypes;
         std::string returnType;
         std::vector<std::string> paramNames;
         std::unique_ptr<BlockStmt> body;
 
-        FunctionDecl(std::string name, std::vector<std::string> paramTypes,
+        FunctionDecl(std::string name, bool isMutable, std::vector<std::string> paramTypes,
                      std::string returnType, std::vector<std::string> paramNames,
                      std::unique_ptr<BlockStmt> body):
         name(std::move(name)),
+        isMutable(isMutable),
         paramTypes(std::move(paramTypes)),
         returnType(std::move(returnType)),
         paramNames(std::move(paramNames)),

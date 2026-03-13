@@ -105,7 +105,7 @@ namespace raccoon::compiler::ast {
             }
 
             auto* globalVar = new llvm::GlobalVariable(
-                    *module, varType, false, llvm::GlobalValue::ExternalLinkage,
+                    *module, varType, !node.isMutable, llvm::GlobalValue::ExternalLinkage,
                     initConst, mangledName
             );
 
@@ -152,7 +152,7 @@ namespace raccoon::compiler::ast {
             builder->CreateStore(&arg, alloca);
 
             std::shared_ptr<Type> pType = stringToType(node.paramTypes[idx]);
-            VarInfo info {argName, pType, true, false, alloca};
+            VarInfo info {argName, pType, !node.isMutable, false, alloca};
             varTable.define(argName, info);
 
             idx++;

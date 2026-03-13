@@ -48,8 +48,6 @@ namespace raccoon::compiler {
     std::unique_ptr<Stmt> Parser::statement() {
         if (match(TokenType::LBRACE)) return block();
 
-        // If it's not a special statement, we assume it's an expression
-        // For now, we'll just throw an error if it doesn't match anything
         throw error(peek(), "Expected statement or declaration.");
     }
 
@@ -69,14 +67,17 @@ namespace raccoon::compiler {
 
     std::unique_ptr<Stmt> Parser::varDeclaration() {
         Token name = consume(TokenType::IDENTIFIER, "Expected variable name.");
+        bool isMutable = false;
         consume(TokenType::BE, "Expected 'be' after variable name.");
 
-        // Branching logic: Is this a function or a variable?
-        if (check(TokenType::LPAREN)) {
-            return functionDeclaration(name);
+        if (match(TokenType::MUTABLE)) {
+            isMutable = true;
         }
 
-        // --- Standard Variable Parsing ---
+        if (check(TokenType::LPAREN)) {
+            return functionDeclaration(name, isMutable);
+        }
+
         Token type = consume(TokenType::IDENTIFIER, "Expected variable type.");
 
         std::unique_ptr<Expr> initializer = nullptr;
@@ -85,16 +86,16 @@ namespace raccoon::compiler {
         }
 
         consume(TokenType::SEMICOLON, "Expected ';' after variable declaration.");
-        return std::make_unique<VariableDecl>(name.lexeme, type.lexeme, std::move(initializer));
+        return std::make_unique<VariableDecl>(name.lexeme, isMutable, type.lexeme, std::move(initializer));
     }
 
-    std::unique_ptr<Stmt> Parser::functionDeclaration(Token name) {
+    std::unique_ptr<Stmt> Parser::functionDeclaration(Token name, bool isMutable) {
         consume(TokenType::LPAREN, "Expected '(' for function type parameters.");
         std::vector<std::string> paramTypes;
         if (!check(TokenType::RPAREN)) {
-            do {
+            while (match(TokenType::COMMA)) {
                 paramTypes.push_back(consume(TokenType::IDENTIFIER, "Expected parameter type.").lexeme);
-            } while (match(TokenType::COMMA));
+            }
         }
         consume(TokenType::RPAREN, "Expected ')' after function type parameters.");
 
@@ -104,9 +105,9 @@ namespace raccoon::compiler {
         consume(TokenType::LPAREN, "Expected '(' for function parameters.");
         std::vector<std::string> paramNames;
         if (!check(TokenType::RPAREN)) {
-            do {
+            while (match(TokenType::COMMA)) {
                 paramNames.push_back(consume(TokenType::IDENTIFIER, "Expected parameter name.").lexeme);
-            } while (match(TokenType::COMMA));
+            }
         }
         consume(TokenType::RPAREN, "Expected ')' after parameters.");
 
@@ -115,7 +116,7 @@ namespace raccoon::compiler {
 
         consume(TokenType::SEMICOLON, "Expected ';' after function declaration.");
 
-        return std::make_unique<FunctionDecl>(name.lexeme, paramTypes, returnType.lexeme, paramNames, std::move(body));
+        return std::make_unique<FunctionDecl>(name.lexeme, isMutable, paramTypes, returnType.lexeme, paramNames, std::move(body));
     }
 
     std::unique_ptr<BlockStmt> Parser::block() {
@@ -181,7 +182,6 @@ namespace raccoon::compiler {
             return std::make_unique<VariableExpr>(name);
         }
 
-        // --- Added: Parentheses Grouping ---
         if (match(TokenType::LPAREN)) {
             std::unique_ptr<Expr> expr = expression(); // Start from the top
             consume(TokenType::RPAREN, "Expected ')' after expression.");
