@@ -17,6 +17,7 @@ namespace raccoon::compiler {
 
     bool Parser::isAtEnd() const { return peek().type == TokenType::EOF_TOKEN; }
     Token Parser::peek() const { return tokens[current]; }
+    Token Parser::next() const { return tokens[current + 1]; }
     Token Parser::previous() const { return tokens[current - 1]; }
     bool Parser::check(TokenType type) const { return !isAtEnd() && peek().type == type; }
 
@@ -102,30 +103,21 @@ namespace raccoon::compiler {
         consume(TokenType::LPAREN, "Expected '(' for function type parameters.");
         std::vector<std::string> paramTypes;
         if (!check(TokenType::RPAREN)) {
-            while (match(TokenType::COMMA)) {
-                paramTypes.push_back(consume(TokenType::IDENTIFIER, "Expected parameter type.").lexeme);
-            }
+            do {
+                paramTypes.push_back(consume(TokenType::IDENTIFIER, "Expected parameter type/name.").lexeme);
+            } while (match(TokenType::COMMA));
         }
         consume(TokenType::RPAREN, "Expected ')' after function type parameters.");
 
         Token returnType = consume(TokenType::IDENTIFIER, "Expected return type.");
-        consume(TokenType::EQUAL, "Expected '=' before function body.");
 
-        consume(TokenType::LPAREN, "Expected '(' for function parameters.");
-        std::vector<std::string> paramNames;
-        if (!check(TokenType::RPAREN)) {
-            while (match(TokenType::COMMA)) {
-                paramNames.push_back(consume(TokenType::IDENTIFIER, "Expected parameter name.").lexeme);
-            }
+        std::unique_ptr<Expr> initializer = nullptr;
+        if (match(TokenType::EQUAL)) {
+            initializer = expression();
         }
-        consume(TokenType::RPAREN, "Expected ')' after parameters.");
-
-        consume(TokenType::LBRACE, "Expected '{' before function body.");
-        std::unique_ptr<BlockStmt> body = block();
 
         consume(TokenType::SEMICOLON, "Expected ';' after function declaration.");
-
-        return std::make_unique<FunctionDecl>(name.lexeme, isMutable, paramTypes, returnType.lexeme, paramNames, std::move(body));
+        return std::make_unique<FunctionDecl>(name.lexeme, isMutable, paramTypes, returnType.lexeme, std::move(initializer));
     }
 
     std::unique_ptr<BlockStmt> Parser::block() {
@@ -138,7 +130,29 @@ namespace raccoon::compiler {
     }
 
     std::unique_ptr<Expr> Parser::expression() {
+        if (check(TokenType::LPAREN)) {
+            if (next().type == TokenType::RPAREN || next().type == TokenType::IDENTIFIER) {
+                return funcExpression();
+            }
+        }
         return term();
+    }
+
+    std::unique_ptr<Expr> Parser::funcExpression() {
+        consume(TokenType::LPAREN, "Expected '(' at start of function.");
+
+        std::vector<std::string> paramNames;
+        if (!check(TokenType::RPAREN)) {
+            do {
+                paramNames.push_back(consume(TokenType::IDENTIFIER, "Expected parameter name.").lexeme);
+            } while (match(TokenType::COMMA));
+        }
+        consume(TokenType::RPAREN, "Expected ')' after parameters.");
+
+        consume(TokenType::LBRACE, "Expected '{' before function body.");
+        std::unique_ptr<BlockStmt> body = block();
+
+        return std::make_unique<FunctionExpr>(paramNames, std::move(body));
     }
 
     std::unique_ptr<Expr> Parser::unary() {

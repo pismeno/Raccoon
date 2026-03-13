@@ -20,6 +20,33 @@ namespace raccoon::compiler::ast {
         this->lastType = varInfo->type;
     }
 
+    void SemanticAnalyzer::visit(FunctionExpr &node) {
+        if (!this->currentExpectedFunctionType) {
+            throw ParseError("Cannot infer parameter types for function expression. Expected signature missing.");
+        }
+
+        std::shared_ptr<FunctionType> signature = this->currentExpectedFunctionType;
+        this->currentExpectedFunctionType = nullptr;
+
+        if (node.paramNames.size() != signature->params.size()) {
+            throw ParseError("Arity mismatch: Function expression parameter count does not match the declaration.");
+        }
+
+        varTable.enterScope();
+
+        for (size_t i = 0; i < node.paramNames.size(); ++i) {
+            varTable.define(node.paramNames[i], signature->params[i], false);
+        }
+
+        if (node.body) {
+            node.body->accept(*this);
+        }
+
+        varTable.exitScope();
+
+        this->lastType = signature;
+    }
+
     void SemanticAnalyzer::visit(UnaryExpression &node) {
         if (node.expr) node.expr->accept(*this);
         std::shared_ptr<Type> rightType = this->lastType;
@@ -88,33 +115,25 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(FunctionDecl &node) {
-
         std::shared_ptr<Type> returnType = checkType(node.returnType);
         std::vector<std::shared_ptr<Type>> paramTypes;
         paramTypes.reserve(node.paramTypes.size());
         for (const auto& paramType : node.paramTypes) {
-                    paramTypes.push_back(checkType(paramType));
+            paramTypes.push_back(checkType(paramType));
         }
 
         std::shared_ptr<FunctionType> signature = FunctionType::make(returnType, paramTypes);
 
         varTable.define(node.name, signature, node.isMutable);
 
-        if (node.body) {
+        if (node.initializer) {
+            this->currentExpectedFunctionType = signature;
 
-            varTable.enterScope();
+            node.initializer->accept(*this);
 
-            for (size_t i = 0; i < node.paramNames.size(); ++i) {
-                varTable.define(node.paramNames[i], paramTypes[i], true);
+            if (!(*this->lastType == *signature)) {
+                throw ParseError("Type mismatch: Function body does not match declaration signature for " + node.name);
             }
-
-            for (const auto& stmt : node.body->statements) {
-                if (stmt) stmt->accept(*this);
-            }
-
-            varTable.exitScope();
-        } else {
-            throw ParseError("Expected body for function: " + node.name);
         }
     }
 

@@ -43,6 +43,9 @@ namespace raccoon::compiler::ast {
 
     class FunctionType : public Type {
     public:
+        std::shared_ptr<Type> returnType;
+        std::vector<std::shared_ptr<Type>> params;
+
         FunctionType(std::shared_ptr<Type> returnType,
                      std::vector<std::shared_ptr<Type>> paramTypes) :
                 Type(TypeKind::FUNCTION),
@@ -56,10 +59,6 @@ namespace raccoon::compiler::ast {
 
     protected:
         bool equals(const Type& other) const override;
-
-    private:
-        std::shared_ptr<Type> returnType;
-        std::vector<std::shared_ptr<Type>> params;
     };
 
 

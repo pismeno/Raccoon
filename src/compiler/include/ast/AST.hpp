@@ -29,6 +29,15 @@ namespace raccoon::compiler::ast {
         virtual ~Stmt() = default;
     };
 
+    class BlockStmt : public Stmt {
+    public:
+        std::vector<std::unique_ptr<Stmt>> statements;
+
+        BlockStmt(std::vector<std::unique_ptr<Stmt>> statements): statements(std::move(statements)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
     class LiteralExpr : public Expr {
     public:
         LiteralValue value;
@@ -43,6 +52,18 @@ namespace raccoon::compiler::ast {
         std::string name;
 
         VariableExpr(std::string name) : name(std::move(name)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
+    class FunctionExpr : public Expr {
+    public:
+        std::vector<std::string> paramNames;
+        std::unique_ptr<BlockStmt> body;
+
+        FunctionExpr(std::vector<std::string> paramNames, std::unique_ptr<BlockStmt> body) :
+        paramNames(std::move(paramNames)),
+        body(std::move(body)) {}
 
         void accept(Visitor& visitor) override;
     };
@@ -69,15 +90,6 @@ namespace raccoon::compiler::ast {
         op(std::move(op)),
         left(std::move(left)),
         right(std::move(right)) {}
-
-        void accept(Visitor& visitor) override;
-    };
-
-    class BlockStmt : public Stmt {
-    public:
-        std::vector<std::unique_ptr<Stmt>> statements;
-
-        BlockStmt(std::vector<std::unique_ptr<Stmt>> statements): statements(std::move(statements)) {}
 
         void accept(Visitor& visitor) override;
     };
@@ -116,18 +128,15 @@ namespace raccoon::compiler::ast {
         std::string name;
         std::vector<std::string> paramTypes;
         std::string returnType;
-        std::vector<std::string> paramNames;
-        std::unique_ptr<BlockStmt> body;
+        std::unique_ptr<Expr> initializer;
 
         FunctionDecl(std::string name, bool isMutable, std::vector<std::string> paramTypes,
-                     std::string returnType, std::vector<std::string> paramNames,
-                     std::unique_ptr<BlockStmt> body):
+                     std::string returnType, std::unique_ptr<Expr> initializer):
         name(std::move(name)),
         isMutable(isMutable),
         paramTypes(std::move(paramTypes)),
         returnType(std::move(returnType)),
-        paramNames(std::move(paramNames)),
-        body(std::move(body)) {}
+        initializer(std::move(initializer)) {}
 
         void accept(Visitor& visitor) override;
     };

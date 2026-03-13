@@ -13,6 +13,7 @@ namespace raccoon::compiler::ast {
 
         void visit(LiteralExpr& node) override;
         void visit(VariableExpr& node) override;
+        void visit(FunctionExpr& node) override;
         void visit(UnaryExpression& node) override;
         void visit(BinaryExpression& node) override;
         void visit(BlockStmt& node) override;
@@ -23,6 +24,7 @@ namespace raccoon::compiler::ast {
     private:
         VarTable varTable;
         std::shared_ptr<Type> lastType = PrimitiveType::Unknown;
+        std::shared_ptr<FunctionType> currentExpectedFunctionType = nullptr;
 
         static std::shared_ptr<Type> checkType(const std::string& declaredTypeStr);
     };

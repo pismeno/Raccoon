@@ -4,6 +4,7 @@ namespace raccoon::compiler::ast {
 
     class LiteralExpr;
     class VariableExpr;
+    class FunctionDecl;
     class UnaryExpression;
     class BinaryExpression;
     class BlockStmt;
@@ -17,6 +18,7 @@ namespace raccoon::compiler::ast {
         virtual ~Visitor() = default;
         virtual void visit(LiteralExpr& node) = 0;
         virtual void visit(VariableExpr& node) = 0;
+        virtual void visit(FunctionExpr& node) = 0;
         virtual void visit(UnaryExpression& node) = 0;
         virtual void visit(BinaryExpression& node) = 0;
         virtual void visit(BlockStmt& node) = 0;

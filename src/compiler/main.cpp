@@ -11,7 +11,14 @@ int main() {
 
     using namespace raccoon::compiler;
 
-    std::string source = "den Main {let main be ()int = () {let x be int = -1109 + 12; let y be mut int = x * -2; y = 99; };};";
+    std::string source = "den Main {"
+                         "let main be ()int = () {"
+                         "let x be int = -1109 + 12; "
+                         "let y be mut int = x * -2; "
+                         "y = 99; "
+                         "};"
+                         "let secon be mut ()int = main;"
+                         "};";
     Lexer lexer(source);
     auto tokens = lexer.tokenize();
 

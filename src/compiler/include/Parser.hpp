@@ -25,6 +25,7 @@ namespace raccoon::compiler {
         bool isAtEnd() const;
         Token peek() const;
         Token previous() const;
+        Token next() const;
         bool check(TokenType type) const;
         bool match(TokenType type);
         Token advance();
@@ -43,6 +44,7 @@ namespace raccoon::compiler {
         std::unique_ptr<Expr> term();
         std::unique_ptr<Expr> factor();
         std::unique_ptr<Expr> unary();
+        std::unique_ptr<Expr> funcExpression();
 
         ParseError error(Token token, const std::string& message);
 

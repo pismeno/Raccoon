@@ -31,6 +31,27 @@ namespace raccoon::compiler::ast {
         std::cout << "[Variable: " << node.name << "]" << std::endl;
     }
 
+    void Printer::visit(FunctionExpr& node) {
+        printIndent();
+        std::cout << "[FunctionExpr: params=(";
+
+        // Print out the parameter names separated by commas
+        for (size_t i = 0; i < node.paramNames.size(); ++i) {
+            std::cout << node.paramNames[i];
+            if (i < node.paramNames.size() - 1) {
+                std::cout << ", ";
+            }
+        }
+        std::cout << ")]" << std::endl;
+
+        // Recursively print the body of the function
+        if (node.body) {
+            indentLevel++;
+            node.body->accept(*this);
+            indentLevel--;
+        }
+    }
+
     void Printer::visit(VariableDecl& node) {
         printIndent();
         std::cout << "[VariableDecl: name=" << node.name
@@ -79,23 +100,23 @@ namespace raccoon::compiler::ast {
     void Printer::visit(FunctionDecl& node) {
         printIndent();
         std::cout << "[FunctionDecl: name=" << node.name
-                  << ", returnType=" << node.returnType << ", params=(";
+                  << ", isMutable=" << (node.isMutable ? "true" : "false")
+                  << ", returnType=" << node.returnType
+                  << ", paramTypes=(";
 
-        // Safely zip paramNames and paramTypes together for the output
-        for (size_t i = 0; i < node.paramNames.size(); ++i) {
-            std::cout << node.paramNames[i];
-            if (i < node.paramTypes.size()) {
-                std::cout << ": " << node.paramTypes[i];
-            }
-            if (i < node.paramNames.size() - 1) {
+        // Print out the parameter types separated by commas
+        for (size_t i = 0; i < node.paramTypes.size(); ++i) {
+            std::cout << node.paramTypes[i];
+            if (i < node.paramTypes.size() - 1) {
                 std::cout << ", ";
             }
         }
         std::cout << ")]" << std::endl;
 
-        if (node.body) {
+        // Recursively print the initializer (which likely holds your FunctionExpr)
+        if (node.initializer) {
             indentLevel++;
-            node.body->accept(*this);
+            node.initializer->accept(*this);
             indentLevel--;
         }
     }
