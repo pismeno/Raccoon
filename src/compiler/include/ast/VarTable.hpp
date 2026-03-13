@@ -13,7 +13,7 @@ namespace raccoon::compiler::ast {
     struct VarInfo {
         std::string name;
         std::shared_ptr<Type> type;
-        bool isImmutable;
+        bool isMutable;
         bool isGlobal;
         llvm::Value* address = nullptr;
     };

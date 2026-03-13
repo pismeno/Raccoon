@@ -43,6 +43,14 @@ namespace raccoon::compiler::ast {
         }
     }
 
+    void Printer::visit(VariableAssign& node) {
+        printIndent();
+        std::cout << "[VariableAssign: name=" << node.name << "]" << std::endl;
+        indentLevel++;
+        node.value->accept(*this);
+        indentLevel--;
+    }
+
     void Printer::visit(UnaryExpression& node) {
         printIndent();
         std::cout << "[UnaryExpr: op='" << node.op << "']" << std::endl;

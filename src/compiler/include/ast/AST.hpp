@@ -98,6 +98,18 @@ namespace raccoon::compiler::ast {
         void accept(Visitor& visitor) override;
     };
 
+    class VariableAssign : public Stmt {
+    public:
+        std::string name;
+        std::unique_ptr<Expr> value;
+
+        VariableAssign(std::string name, std::unique_ptr<Expr> value):
+        name(std::move(name)),
+        value(std::move(value)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
     class FunctionDecl : public Stmt {
     public:
         bool isMutable;

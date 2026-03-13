@@ -20,11 +20,11 @@ namespace raccoon::compiler::ast {
         }
     }
 
-    void VarTable::define(const std::string& name, const std::shared_ptr<Type> type, bool isImmutable) {
+    void VarTable::define(const std::string& name, const std::shared_ptr<Type> type, bool isMutable) {
         VarInfo info;
         info.name = name;
         info.type = type;
-        info.isImmutable = isImmutable;
+        info.isMutable = isMutable;
         info.isGlobal = (scopes.size() == 2);
 
         scopes.back()[name] = info;

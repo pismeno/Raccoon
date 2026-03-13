@@ -34,6 +34,7 @@ namespace raccoon::compiler {
         std::unique_ptr<Stmt> statement();
         std::unique_ptr<Stmt> denDeclaration();
         std::unique_ptr<Stmt> varDeclaration();
+        std::unique_ptr<Stmt> varAssignment();
         std::unique_ptr<Stmt> functionDeclaration(Token name, bool isMutable);
         std::unique_ptr<BlockStmt> block();
 

@@ -21,7 +21,6 @@ namespace raccoon::compiler::ast {
 
     void IRGenerator::visit(VariableExpr& node) {
         std::optional<VarInfo> varInfo = varTable.lookup(node.name);
-        if (!varInfo) throw ParseError("Undefined variable: " + node.name);
 
         if (builder->GetInsertBlock()) {
             llvm::Type* loadType = getLLVMType(varInfo->type);
@@ -29,6 +28,18 @@ namespace raccoon::compiler::ast {
         } else {
             this->lastValue = varInfo->address;
         }
+    }
+
+    void IRGenerator::visit(VariableAssign& node) {
+        if (node.value) {
+            node.value->accept(*this);
+        }
+        llvm::Value* newValue = this->lastValue;
+
+        std::optional<VarInfo> varInfo = varTable.lookup(node.name);
+        builder->CreateStore(newValue, varInfo->address);
+
+        this->lastValue = newValue;
     }
 
     void IRGenerator::visit(UnaryExpression& node) {

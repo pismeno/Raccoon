@@ -77,7 +77,14 @@ namespace raccoon::compiler::ast {
             }
         }
 
-        varTable.define(node.name, declaredType, true);
+        varTable.define(node.name, declaredType, node.isMutable);
+    }
+
+    void SemanticAnalyzer::visit(VariableAssign &node) {
+        std::optional<VarInfo> varInfo = varTable.lookup(node.name);
+        if (!varInfo) throw ParseError("Undefined variable: " + node.name);
+        if (!varInfo->isMutable) throw ParseError("Cannot assign to immutable: " + node.name);
+        this->lastType = varInfo->type;
     }
 
     void SemanticAnalyzer::visit(FunctionDecl &node) {
@@ -91,7 +98,7 @@ namespace raccoon::compiler::ast {
 
         std::shared_ptr<FunctionType> signature = FunctionType::make(returnType, paramTypes);
 
-        varTable.define(node.name, signature, true);
+        varTable.define(node.name, signature, node.isMutable);
 
         if (node.body) {
 

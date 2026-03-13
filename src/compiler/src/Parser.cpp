@@ -47,6 +47,7 @@ namespace raccoon::compiler {
 
     std::unique_ptr<Stmt> Parser::statement() {
         if (match(TokenType::LBRACE)) return block();
+        if (check(TokenType::IDENTIFIER)) return varAssignment();
 
         throw error(peek(), "Expected statement or declaration.");
     }
@@ -89,7 +90,15 @@ namespace raccoon::compiler {
         return std::make_unique<VariableDecl>(name.lexeme, isMutable, type.lexeme, std::move(initializer));
     }
 
-    std::unique_ptr<Stmt> Parser::functionDeclaration(Token name, bool isMutable) {
+    std::unique_ptr<Stmt> Parser::varAssignment() {
+        Token name = consume(TokenType::IDENTIFIER, "Expected variable name.");
+        consume(TokenType::EQUAL, "Expected '=' after variable name.");
+        std::unique_ptr<Expr> value = expression();
+        consume(TokenType::SEMICOLON, "Expected ';' after variable assignment.");
+        return std::make_unique<VariableAssign>(name.lexeme, std::move(value));
+    }
+
+    std::unique_ptr<Stmt> Parser::functionDeclaration(const Token name, bool isMutable) {
         consume(TokenType::LPAREN, "Expected '(' for function type parameters.");
         std::vector<std::string> paramTypes;
         if (!check(TokenType::RPAREN)) {

@@ -8,6 +8,7 @@ namespace raccoon::compiler::ast {
     class BinaryExpression;
     class BlockStmt;
     class VariableDecl;
+    class VariableAssign;
     class FunctionDecl;
     class DenStmt;
 
@@ -20,6 +21,7 @@ namespace raccoon::compiler::ast {
         virtual void visit(BinaryExpression& node) = 0;
         virtual void visit(BlockStmt& node) = 0;
         virtual void visit(VariableDecl& node) = 0;
+        virtual void visit(VariableAssign& node) = 0;
         virtual void visit(FunctionDecl& node) = 0;
         virtual void visit(DenStmt& node) = 0;
     };
