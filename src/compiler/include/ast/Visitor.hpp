@@ -4,13 +4,14 @@ namespace raccoon::compiler::ast {
 
     class LiteralExpr;
     class VariableExpr;
-    class FunctionDecl;
+    class FunctionExpr;
     class UnaryExpression;
     class BinaryExpression;
     class BlockStmt;
     class VariableDecl;
     class VariableAssign;
     class FunctionDecl;
+    class ReturnStmt;
     class DenStmt;
 
     class Visitor {
@@ -25,6 +26,7 @@ namespace raccoon::compiler::ast {
         virtual void visit(VariableDecl& node) = 0;
         virtual void visit(VariableAssign& node) = 0;
         virtual void visit(FunctionDecl& node) = 0;
+        virtual void visit(ReturnStmt& node) = 0;
         virtual void visit(DenStmt& node) = 0;
     };
 }

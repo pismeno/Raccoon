@@ -22,6 +22,7 @@ namespace raccoon::compiler::ast {
         void visit(VariableDecl& node) override;
         void visit(VariableAssign& node) override;
         void visit(FunctionDecl& node) override;
+        void visit(ReturnStmt& node) override;
         void visit(DenStmt& node) override;
 
         std::unique_ptr<llvm::LLVMContext> context;
@@ -32,7 +33,7 @@ namespace raccoon::compiler::ast {
         std::string currentDen = "";
         llvm::Value* lastValue = nullptr;
 
-        std::shared_ptr<FunctionType> currentExpectedSignature = nullptr;
+        std::shared_ptr<FunctionType> currentExpectedFunctionType = nullptr;
         std::string currentExpectedFuncName = "";
 
         llvm::Type* getLLVMType(std::shared_ptr<Type> type);

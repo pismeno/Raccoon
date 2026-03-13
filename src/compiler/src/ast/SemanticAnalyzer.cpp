@@ -26,7 +26,6 @@ namespace raccoon::compiler::ast {
         }
 
         std::shared_ptr<FunctionType> signature = this->currentExpectedFunctionType;
-        this->currentExpectedFunctionType = nullptr;
 
         if (node.paramNames.size() != signature->params.size()) {
             throw ParseError("Arity mismatch: Function expression parameter count does not match the declaration.");
@@ -41,6 +40,8 @@ namespace raccoon::compiler::ast {
         if (node.body) {
             node.body->accept(*this);
         }
+
+        this->currentExpectedFunctionType = nullptr;
 
         varTable.exitScope();
 
@@ -134,6 +135,14 @@ namespace raccoon::compiler::ast {
             if (!(*this->lastType == *signature)) {
                 throw ParseError("Type mismatch: Function body does not match declaration signature for " + node.name);
             }
+        }
+    }
+
+    void SemanticAnalyzer::visit(ReturnStmt &node) {
+        if (node.expr) node.expr->accept(*this);
+        if (this->currentExpectedFunctionType == nullptr) throw ParseError("Cannot return from a non-function.");
+        if (!(*this->lastType == *this->currentExpectedFunctionType->returnType)) {
+            throw ParseError("Type mismatch: Function return type does not match expression type.");
         }
     }
 

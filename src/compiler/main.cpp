@@ -16,6 +16,7 @@ int main() {
                          "let x be int = -1109 + 12; "
                          "let y be mut int = x * -2; "
                          "y = 99; "
+                         "return x + y; "
                          "};"
                          "let secon be mut ()int = main;"
                          "};";

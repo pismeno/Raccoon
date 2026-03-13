@@ -48,6 +48,7 @@ namespace raccoon::compiler {
 
     std::unique_ptr<Stmt> Parser::statement() {
         if (match(TokenType::LBRACE)) return block();
+        if (match(TokenType::RETURN)) return ret();
         if (check(TokenType::IDENTIFIER)) return varAssignment();
 
         throw error(peek(), "Expected statement or declaration.");
@@ -153,6 +154,12 @@ namespace raccoon::compiler {
         std::unique_ptr<BlockStmt> body = block();
 
         return std::make_unique<FunctionExpr>(paramNames, std::move(body));
+    }
+
+    std::unique_ptr<Stmt> Parser::ret() {
+        std::unique_ptr<Expr> expr = expression();
+        consume(TokenType::SEMICOLON, "Expected ';' after return statement.");
+        return std::make_unique<ReturnStmt>(std::move(expr));
     }
 
     std::unique_ptr<Expr> Parser::unary() {

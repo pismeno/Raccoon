@@ -36,7 +36,7 @@ namespace raccoon::compiler::ast {
     }
 
     void IRGenerator::visit(FunctionExpr& node) {
-        std::shared_ptr<FunctionType> signature = this->currentExpectedSignature;
+        std::shared_ptr<FunctionType> signature = this->currentExpectedFunctionType;
         if (!signature) throw ParseError("Missing function signature during IR generation.");
 
         std::string funcName = this->currentExpectedFuncName;
@@ -79,11 +79,6 @@ namespace raccoon::compiler::ast {
             node.body->accept(*this);
         }
 
-        if (!builder->GetInsertBlock()->getTerminator()) {
-            if (retType->isVoidTy()) builder->CreateRetVoid();
-            else builder->CreateRet(llvm::Constant::getNullValue(retType));
-        }
-
         varTable.exitScope();
 
         if (backupBlock) {
@@ -93,6 +88,24 @@ namespace raccoon::compiler::ast {
         }
 
         this->lastValue = func;
+    }
+
+    void IRGenerator::visit(ReturnStmt &node) {
+        if (node.expr) {
+            node.expr->accept(*this);
+        }
+
+        llvm::BasicBlock* currentBlock = builder->GetInsertBlock();
+        if (!currentBlock) throw ParseError("Return statement outside of a valid block.");
+
+        llvm::Function* currentFunc = currentBlock->getParent();
+        llvm::Type* retType = currentFunc->getReturnType();
+
+        if (retType->isVoidTy()) {
+            builder->CreateRetVoid();
+        } else {
+            builder->CreateRet(this->lastValue ? this->lastValue : llvm::Constant::getNullValue(retType));
+        }
     }
 
     void IRGenerator::visit(UnaryExpression& node) {
@@ -154,16 +167,19 @@ namespace raccoon::compiler::ast {
         llvm::Value* initValue = llvm::Constant::getNullValue(varType);
 
         if (node.initializer) {
+            auto prevExpectedType = this->currentExpectedFunctionType;
+            auto prevExpectedName = this->currentExpectedFuncName;
+
             if (nodeType->getKind() == TypeKind::FUNCTION) {
-                this->currentExpectedSignature = std::dynamic_pointer_cast<FunctionType>(nodeType);
+                this->currentExpectedFunctionType = std::dynamic_pointer_cast<FunctionType>(nodeType);
                 this->currentExpectedFuncName = node.name;
             }
 
             node.initializer->accept(*this);
             initValue = this->lastValue;
 
-            this->currentExpectedSignature = nullptr;
-            this->currentExpectedFuncName = "";
+            this->currentExpectedFunctionType = prevExpectedType;
+            this->currentExpectedFuncName = prevExpectedName;
         }
 
         llvm::BasicBlock* backupBlock = builder->GetInsertBlock();
@@ -199,12 +215,12 @@ namespace raccoon::compiler::ast {
 
         if (node.value) {
             if (varInfo->type->getKind() == TypeKind::FUNCTION) {
-                this->currentExpectedSignature = std::dynamic_pointer_cast<FunctionType>(varInfo->type);
+                this->currentExpectedFunctionType = std::dynamic_pointer_cast<FunctionType>(varInfo->type);
                 this->currentExpectedFuncName = "";
             }
 
             node.value->accept(*this);
-            this->currentExpectedSignature = nullptr;
+            this->currentExpectedFunctionType = nullptr;
             this->currentExpectedFuncName = "";
         }
 
@@ -221,13 +237,13 @@ namespace raccoon::compiler::ast {
         llvm::Value* resolvedFuncPtr = nullptr;
 
         if (node.initializer) {
-            this->currentExpectedSignature = signature;
+            this->currentExpectedFunctionType = signature;
             this->currentExpectedFuncName = node.name;
 
             node.initializer->accept(*this);
             resolvedFuncPtr = this->lastValue;
 
-            this->currentExpectedSignature = nullptr;
+            this->currentExpectedFunctionType = nullptr;
             this->currentExpectedFuncName = "";
         } else {
             std::vector<llvm::Type*> paramTypes;

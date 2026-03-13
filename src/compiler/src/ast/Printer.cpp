@@ -131,6 +131,16 @@ namespace raccoon::compiler::ast {
         indentLevel--;
     }
 
+    void Printer::visit(ReturnStmt& node) {
+        printIndent();
+        std::cout << "[ReturnStmt]" << std::endl;
+        if (node.expr) {
+            indentLevel++;
+            node.expr->accept(*this);
+            indentLevel--;
+        }
+    }
+
     void Printer::visit(DenStmt& node) {
         printIndent();
         std::cout << "[DenStmt: name=" << node.name << "]" << std::endl;

@@ -141,6 +141,15 @@ namespace raccoon::compiler::ast {
         void accept(Visitor& visitor) override;
     };
 
+    class ReturnStmt : public Stmt {
+    public:
+        std::unique_ptr<Expr> expr;
+
+        ReturnStmt(std::unique_ptr<Expr> expr): expr(std::move(expr)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
     class DenStmt: public Stmt {
     public:
         std::string name;

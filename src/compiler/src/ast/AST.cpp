@@ -38,6 +38,10 @@ namespace raccoon::compiler::ast {
         visitor.visit(*this);
     }
 
+    void ReturnStmt::accept(Visitor& visitor) {
+        visitor.visit(*this);
+    }
+
     void DenStmt::accept(Visitor& visitor) {
         visitor.visit(*this);
     }
