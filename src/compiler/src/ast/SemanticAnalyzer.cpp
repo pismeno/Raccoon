@@ -110,7 +110,8 @@ namespace raccoon::compiler::ast {
 
     void SemanticAnalyzer::visit(VariableAssign &node) {
         std::optional<VarInfo> varInfo = varTable.lookup(node.name);
-        if (!varInfo) throw ParseError("Undefined variable: " + node.name);
+        if (!varInfo) throw ParseError("Cannot assign to undefined variable: " + node.name);
+        if (currentExpectedFunctionType == nullptr) throw ParseError("Cannot assign to " + node.name + " outside functions.");
         if (!varInfo->isMutable) throw ParseError("Cannot assign to immutable: " + node.name);
         this->lastType = varInfo->type;
     }

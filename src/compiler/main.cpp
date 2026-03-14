@@ -13,6 +13,7 @@ int main() {
 
     std::string source = "den Main {"
                          "let add be (int, int)int = (a, b) {return a + b;};"
+                         "let xx be mut int = 12;"
                          "let main be ()int = () {"
                          "let x be int = -1109 + 12; "
                          "let y be mut int = x * -2; "

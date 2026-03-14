@@ -313,7 +313,7 @@ namespace raccoon::compiler::ast {
 
         switch (type->getKind()) {
             case TypeKind::VOID:     return builder->getVoidTy();
-            case TypeKind::INT:      return builder->getInt64Ty();
+            case TypeKind::INT:      return builder->getInt32Ty();
             case TypeKind::FLOAT:    return builder->getDoubleTy();
             case TypeKind::BOOL:     return builder->getInt1Ty();
             case TypeKind::FUNCTION: return builder->getPtrTy();
