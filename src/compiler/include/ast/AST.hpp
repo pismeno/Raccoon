@@ -68,6 +68,18 @@ namespace raccoon::compiler::ast {
         void accept(Visitor& visitor) override;
     };
 
+    class CallExpr : public Expr {
+    public:
+        std::string func;
+        std::vector<std::unique_ptr<Expr>> args;
+
+        CallExpr(std::string func, std::vector<std::unique_ptr<Expr>> args):
+                func(std::move(func)),
+                args(std::move(args)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
     class UnaryExpression : public Expr {
     public:
         std::string op;

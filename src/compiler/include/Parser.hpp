@@ -46,6 +46,7 @@ namespace raccoon::compiler {
         std::unique_ptr<Expr> factor();
         std::unique_ptr<Expr> unary();
         std::unique_ptr<Expr> funcExpression();
+        std::unique_ptr<Expr> finishCall(const std::string& name);
 
         ParseError error(Token token, const std::string& message);
 

@@ -52,6 +52,18 @@ namespace raccoon::compiler::ast {
         }
     }
 
+    void Printer::visit(CallExpr& node) {
+        printIndent();
+        std::cout << "[CallExpr: func=" << node.func << "]" << std::endl;
+        indentLevel++;
+        for (const auto& arg : node.args) {
+            if (arg) {
+                arg->accept(*this);
+            }
+        }
+        indentLevel--;
+    }
+
     void Printer::visit(VariableDecl& node) {
         printIndent();
         std::cout << "[VariableDecl: name=" << node.name

@@ -21,6 +21,8 @@ namespace raccoon::compiler::ast {
             return this->equals(other);
         }
 
+        bool operator!=(const Type& other) const { return !(*this == other); }
+
         TypeKind getKind() const { return kind; }
     protected:
         TypeKind kind;

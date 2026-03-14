@@ -156,6 +156,17 @@ namespace raccoon::compiler {
         return std::make_unique<FunctionExpr>(paramNames, std::move(body));
     }
 
+    std::unique_ptr<Expr> Parser::finishCall(const std::string& name) {
+        std::vector<std::unique_ptr<Expr>> arguments;
+        if (!check(TokenType::RPAREN)) {
+            do {
+                arguments.push_back(expression());
+            } while (match(TokenType::COMMA));
+        }
+        consume(TokenType::RPAREN, "Expected ')' after arguments.");
+        return std::make_unique<CallExpr>(name, std::move(arguments));
+    }
+
     std::unique_ptr<Stmt> Parser::ret() {
         std::unique_ptr<Expr> expr = expression();
         consume(TokenType::SEMICOLON, "Expected ';' after return statement.");
@@ -208,16 +219,21 @@ namespace raccoon::compiler {
         }
 
         if (match(TokenType::IDENTIFIER)) {
-            std::string name = previous().lexeme;
-            return std::make_unique<VariableExpr>(name);
+            Token name = previous(); // Save the name immediately!
+
+            // If followed by '(', it's a call
+            if (match(TokenType::LPAREN)) {
+                return finishCall(name.lexeme);
+            }
+
+            return std::make_unique<VariableExpr>(name.lexeme);
         }
 
         if (match(TokenType::LPAREN)) {
-            std::unique_ptr<Expr> expr = expression(); // Start from the top
+            auto expr = expression();
             consume(TokenType::RPAREN, "Expected ')' after expression.");
             return expr;
         }
-
         throw error(peek(), "Expected expression.");
     }
 

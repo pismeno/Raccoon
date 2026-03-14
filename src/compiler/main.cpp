@@ -12,11 +12,12 @@ int main() {
     using namespace raccoon::compiler;
 
     std::string source = "den Main {"
+                         "let add be (int, int)int = (a, b) {return a + b;};"
                          "let main be ()int = () {"
                          "let x be int = -1109 + 12; "
                          "let y be mut int = x * -2; "
                          "y = 99; "
-                         "return x + y; "
+                         "return add(x, y); "
                          "};"
                          "let secon be mut ()int = main;"
                          "};";

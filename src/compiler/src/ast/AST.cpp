@@ -14,6 +14,10 @@ namespace raccoon::compiler::ast {
         visitor.visit(*this);
     }
 
+    void CallExpr::accept(Visitor& visitor) {
+        visitor.visit(*this);
+    }
+
     void UnaryExpression::accept(Visitor& visitor) {
         visitor.visit(*this);
     }

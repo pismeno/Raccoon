@@ -16,6 +16,7 @@ namespace raccoon::compiler::ast {
         void visit(LiteralExpr& node) override;
         void visit(VariableExpr& node) override;
         void visit(FunctionExpr& node) override;
+        void visit(CallExpr& node) override;
         void visit(UnaryExpression& node) override;
         void visit(BinaryExpression& node) override;
         void visit(BlockStmt& node) override;

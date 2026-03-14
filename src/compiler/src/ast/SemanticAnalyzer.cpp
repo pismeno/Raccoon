@@ -146,6 +146,35 @@ namespace raccoon::compiler::ast {
         }
     }
 
+    void SemanticAnalyzer::visit(CallExpr &node) {
+        std::optional<VarInfo> varInfo = varTable.lookup(node.func);
+        if (!varInfo) {
+            throw ParseError("Undefined function: " + node.func);
+        }
+
+        if (varInfo->type->getKind() != TypeKind::FUNCTION) {
+            throw ParseError("Cannot call non-function: " + node.func);
+        }
+
+        auto funcType = std::static_pointer_cast<FunctionType>(varInfo->type);
+
+        if (node.args.size() != funcType->params.size()) {
+            throw ParseError("Function '" + node.func + "' expects " +
+                             std::to_string(funcType->params.size()) + " arguments, but " +
+                             std::to_string(node.args.size()) + " were provided.");
+        }
+
+        for (size_t i = 0; i < node.args.size(); ++i) {
+            node.args[i]->accept(*this);
+
+            if (*(this->lastType) != *(funcType->params[i])) {
+                throw ParseError("Type mismatch in call to '" + node.func +
+                                 "': Argument " + std::to_string(i) +
+                                 " does not match expected type.");
+            }
+        }
+    }
+
     void SemanticAnalyzer::visit(DenStmt &node) {
         varTable.enterScope(node.name);
 

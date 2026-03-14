@@ -90,6 +90,22 @@ namespace raccoon::compiler::ast {
         this->lastValue = func;
     }
 
+    void IRGenerator::visit(CallExpr &node) {
+        llvm::Function* function = module->getFunction(node.func);
+
+        if (!function) throw ParseError("Undefined function: " + node.func);
+
+        std::vector<llvm::Value *> args;
+        for (const auto& arg : node.args) {
+            arg->accept(*this);
+            args.push_back(this->lastValue);
+        }
+
+        llvm::CallInst* call = builder->CreateCall(function, args);
+
+        this->lastValue = call;
+    }
+
     void IRGenerator::visit(ReturnStmt &node) {
         if (node.expr) {
             node.expr->accept(*this);
