@@ -8,12 +8,18 @@ namespace raccoon::compiler::ast {
         context = std::make_unique<llvm::LLVMContext>();
         module = std::make_unique<llvm::Module>("RaccoonModule", *context);
         builder = std::make_unique<llvm::IRBuilder<>>(*context);
+
+
+    }
+
+    void IRGenerator::visit(ExprStmt &node) {
+        if (node.expr) node.expr->accept(*this);
     }
 
     void IRGenerator::visit(LiteralExpr& node) {
         std::visit([this](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
-            if constexpr (std::is_same_v<T, int64_t>) this->lastValue = llvm::ConstantInt::get(builder->getInt64Ty(), arg);
+            if constexpr (std::is_same_v<T, int32_t>) this->lastValue = llvm::ConstantInt::get(builder->getInt32Ty(), arg);
             else if constexpr (std::is_same_v<T, double>) this->lastValue = llvm::ConstantFP::get(builder->getDoubleTy(), arg);
             else if constexpr (std::is_same_v<T, bool>)   this->lastValue = builder->getInt1(arg);
         }, node.value);
@@ -91,19 +97,39 @@ namespace raccoon::compiler::ast {
     }
 
     void IRGenerator::visit(CallExpr &node) {
-        llvm::Function* function = module->getFunction(node.func);
 
-        if (!function) throw ParseError("Undefined function: " + node.func);
+        if (node.func == "print") {
+            llvm::FunctionCallee printfFn = module->getOrInsertFunction(
+                    "printf",
+                    llvm::FunctionType::get(builder->getInt32Ty(), {builder->getPtrTy()}, true)
+            );
 
-        std::vector<llvm::Value *> args;
-        for (const auto& arg : node.args) {
-            arg->accept(*this);
-            args.push_back(this->lastValue);
+            if (node.args.size() != 1) throw ParseError("print() expects 1 argument.");
+            node.args[0]->accept(*this);
+            llvm::Value* valToPrint = this->lastValue;
+
+            std::string fmt;
+            if (valToPrint->getType()->isIntegerTy(32)) fmt = "%d\n";
+            else throw ParseError("Unsupported type for print()");
+
+            llvm::Value* fmtPtr = builder->CreateGlobalStringPtr(fmt, "print_fmt");
+
+            this->lastValue = builder->CreateCall(printfFn, {fmtPtr, valToPrint});
+        } else {
+            llvm::Function* function = module->getFunction(node.func);
+
+            if (!function) throw ParseError("Undefined function: " + node.func);
+
+            std::vector<llvm::Value *> args;
+            for (const auto& arg : node.args) {
+                arg->accept(*this);
+                args.push_back(this->lastValue);
+            }
+
+            llvm::CallInst* call = builder->CreateCall(function, args);
+
+            this->lastValue = call;
         }
-
-        llvm::CallInst* call = builder->CreateCall(function, args);
-
-        this->lastValue = call;
     }
 
     void IRGenerator::visit(ReturnStmt &node) {

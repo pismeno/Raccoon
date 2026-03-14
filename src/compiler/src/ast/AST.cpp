@@ -2,6 +2,10 @@
 #include "../../include/ast/Visitor.hpp"
 
 namespace raccoon::compiler::ast {
+    void ExprStmt::accept(Visitor& visitor) {
+        visitor.visit(*this);
+    }
+
     void LiteralExpr::accept(Visitor& visitor) {
         visitor.visit(*this);
     }

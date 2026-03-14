@@ -10,6 +10,7 @@ namespace raccoon::compiler::ast {
     public:
         Printer() : indentLevel(0) {}
 
+        void visit(ExprStmt& node) override;
         void visit(LiteralExpr& node) override;
         void visit(VariableExpr& node) override;
         void visit(FunctionExpr& node) override;

@@ -8,7 +8,7 @@
 
 namespace raccoon::compiler::ast {
 
-    using LiteralValue = std::variant<int64_t, double, bool>;
+    using LiteralValue = std::variant<int32_t, double, bool>;
 
     class Visitor;
 
@@ -27,6 +27,15 @@ namespace raccoon::compiler::ast {
     class Stmt : public ASTNode {
     public:
         virtual ~Stmt() = default;
+    };
+
+    class ExprStmt : public Stmt {
+    public:
+        std::unique_ptr<Expr> expr;
+
+        ExprStmt(std::unique_ptr<Expr> expr) : expr(std::move(expr)) {}
+
+        void accept(Visitor& visitor) override;
     };
 
     class BlockStmt : public Stmt {

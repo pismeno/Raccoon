@@ -2,6 +2,7 @@
 
 namespace raccoon::compiler::ast {
 
+    class ExprStmt;
     class LiteralExpr;
     class VariableExpr;
     class FunctionExpr;
@@ -18,6 +19,7 @@ namespace raccoon::compiler::ast {
     class Visitor {
     public:
         virtual ~Visitor() = default;
+        virtual void visit(ExprStmt& node) = 0;
         virtual void visit(LiteralExpr& node) = 0;
         virtual void visit(VariableExpr& node) = 0;
         virtual void visit(FunctionExpr& node) = 0;

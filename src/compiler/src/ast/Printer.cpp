@@ -21,6 +21,16 @@ namespace raccoon::compiler::ast {
         }, value);
     }
 
+    void Printer::visit(ExprStmt& node) {
+        printIndent();
+        std::cout << "[ExprStmt]" << std::endl;
+        if (node.expr) {
+            indentLevel++;
+            node.expr->accept(*this);
+            indentLevel--;
+        }
+    }
+
     void Printer::visit(LiteralExpr& node) {
         printIndent();
         std::cout << "[Literal: " << formatLiteral(node.value) << "]" << std::endl;

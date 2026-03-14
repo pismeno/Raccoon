@@ -13,6 +13,7 @@ namespace raccoon::compiler::ast {
     public:
         IRGenerator();
 
+        void visit(ExprStmt& node) override;
         void visit(LiteralExpr& node) override;
         void visit(VariableExpr& node) override;
         void visit(FunctionExpr& node) override;

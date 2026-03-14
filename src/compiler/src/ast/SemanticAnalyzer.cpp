@@ -5,10 +5,14 @@
 
 namespace raccoon::compiler::ast {
 
+    void SemanticAnalyzer::visit(ExprStmt &node) {
+        if (node.expr) node.expr->accept(*this);
+    }
+
     void SemanticAnalyzer::visit(LiteralExpr &node) {
         std::visit([this](auto&& arg) {
             using T = std::decay_t<decltype(arg)>;
-            if constexpr (std::is_same_v<T, int64_t>) this->lastType = PrimitiveType::Int;
+            if constexpr (std::is_same_v<T, int32_t>) this->lastType = PrimitiveType::Int;
             else if constexpr (std::is_same_v<T, double>) this->lastType = PrimitiveType::Float;
             else if constexpr (std::is_same_v<T, bool>)   this->lastType = PrimitiveType::Bool;
         }, node.value);
@@ -148,6 +152,14 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(CallExpr &node) {
+
+        if (node.func == "print") {
+            for (const auto& arg : node.args) {
+                if (arg) arg->accept(*this);
+            }
+            return;
+        }
+
         std::optional<VarInfo> varInfo = varTable.lookup(node.func);
         if (!varInfo) {
             throw ParseError("Undefined function: " + node.func);

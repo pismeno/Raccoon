@@ -49,9 +49,22 @@ namespace raccoon::compiler {
     std::unique_ptr<Stmt> Parser::statement() {
         if (match(TokenType::LBRACE)) return block();
         if (match(TokenType::RETURN)) return ret();
-        if (check(TokenType::IDENTIFIER)) return varAssignment();
+
+        if (check(TokenType::IDENTIFIER)) {
+            if (next().type == TokenType::EQUAL) {
+                return varAssignment();
+            }
+
+            return expressionStatement();
+        }
 
         throw error(peek(), "Expected statement or declaration.");
+    }
+
+    std::unique_ptr<Stmt> Parser::expressionStatement() {
+        std::unique_ptr<Expr> expr = expression();
+        consume(TokenType::SEMICOLON, "Expected ';' after expression.");
+        return std::make_unique<ExprStmt>(std::move(expr));
     }
 
     std::unique_ptr<Stmt> Parser::denDeclaration() {
@@ -211,10 +224,12 @@ namespace raccoon::compiler {
         if (match(TokenType::NUMBER)) {
             std::string text = previous().lexeme;
             try {
-                int64_t value = std::stoll(text);
+                int32_t value = std::stoi(text);
                 return std::make_unique<LiteralExpr>(value);
+            } catch (const std::out_of_range&) {
+                throw error(previous(), "Number exceeds 32-bit integer range: " + text);
             } catch (...) {
-                throw error(previous(), "Number too large: " + text);
+                throw error(previous(), "Invalid number: " + text);
             }
         }
 
