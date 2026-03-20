@@ -87,6 +87,6 @@ if age > 19 {
 ### Dens (Namespaces)
 `den` blocks act as namespaces to prevent naming collisions.
 ```raccoon
-den Math {
+den math::geometry {
     let PI be float = 3.14;
 }
