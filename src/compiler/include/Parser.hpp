@@ -22,6 +22,8 @@ namespace raccoon::compiler {
         std::unique_ptr<BlockStmt> parse();
 
     private:
+        Operation tokenToOperation(TokenType type) const;
+
         bool isAtEnd() const;
         Token peek() const;
         Token peek(int offset) const;

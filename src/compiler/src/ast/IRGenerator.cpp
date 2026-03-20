@@ -179,36 +179,46 @@ namespace raccoon::compiler::ast {
 
         bool isFloat = leftValue->getType()->isFloatingPointTy();
 
-        if (node.op == "+") {
-            this->lastValue = isFloat ? builder->CreateFAdd(leftValue, rightValue, "addtmp")
-                                      : builder->CreateAdd(leftValue, rightValue, "addtmp");
-        } else if (node.op == "-") {
-            this->lastValue = isFloat ? builder->CreateFSub(leftValue, rightValue, "subtmp")
-                                      : builder->CreateSub(leftValue, rightValue, "subtmp");
-        } else if (node.op == "*") {
-            this->lastValue = isFloat ? builder->CreateFMul(leftValue, rightValue, "multmp")
-                                      : builder->CreateMul(leftValue, rightValue, "multmp");
-        } else if (node.op == "/") {
-            this->lastValue = isFloat ? builder->CreateFDiv(leftValue, rightValue, "divtmp")
-                                      : builder->CreateSDiv(leftValue, rightValue, "divtmp");
-        } else if (node.op == "<") {
-            this->lastValue = builder->CreateICmpSLT(leftValue, rightValue, "cmptmp");
-        } else if (node.op == ">") {
-            this->lastValue = builder->CreateICmpSGT(leftValue, rightValue, "cmptmp");
-        } else if (node.op == "<=") {
-            this->lastValue = builder->CreateICmpSLE(leftValue, rightValue, "cmptmp");
-        } else if (node.op == ">=") {
-            this->lastValue = builder->CreateICmpSGE(leftValue, rightValue, "cmptmp");
-        } else if (node.op == "==") {
-            this->lastValue = builder->CreateICmpEQ(leftValue, rightValue, "cmptmp");
-        } else if (node.op == "!=") {
-            this->lastValue = builder->CreateICmpNE(leftValue, rightValue, "cmptmp");
-        } else if (node.op == "and") {
-            this->lastValue = builder->CreateAnd(leftValue, rightValue, "andtmp");
-        } else if (node.op == "or") {
-            this->lastValue = builder->CreateOr(leftValue, rightValue, "ortmp");
-        } else {
-            throw ParseError("Unknown binary operator: " + node.op);
+        switch (node.op) {
+            case Operation::ADD:
+                this->lastValue = isFloat ? builder->CreateFAdd(leftValue, rightValue, "addtmp") : builder->CreateAdd(leftValue, rightValue, "addtmp");
+                break;
+            case Operation::SUB:
+                this->lastValue = isFloat ? builder->CreateFSub(leftValue, rightValue, "subtmp") : builder->CreateSub(leftValue, rightValue, "subtmp");
+                break;
+            case Operation::MUL:
+                this->lastValue = isFloat ? builder->CreateFMul(leftValue, rightValue, "multmp") : builder->CreateMul(leftValue, rightValue, "multmp");
+                break;
+            case Operation::DIV:
+                this->lastValue = isFloat ? builder->CreateFDiv(leftValue, rightValue, "divtmp") : builder->CreateSDiv(leftValue, rightValue, "divtmp");
+                break;
+            case Operation::LESSER:
+                this->lastValue = isFloat ? builder->CreateFCmpOLT(leftValue, rightValue, "cmptmp") : builder->CreateICmpSLT(leftValue, rightValue, "cmptmp");
+                break;
+            case Operation::GREATER:
+                this->lastValue = isFloat ? builder->CreateFCmpOGT(leftValue, rightValue, "cmptmp") : builder->CreateICmpSGT(leftValue, rightValue, "cmptmp");
+                break;
+            case Operation::LESSER_EQUAL:
+                this->lastValue = isFloat ? builder->CreateFCmpOLE(leftValue, rightValue, "cmptmp") : builder->CreateICmpSLE(leftValue, rightValue, "cmptmp");
+                break;
+            case Operation::GREATER_EQUAL:
+                this->lastValue = isFloat ? builder->CreateFCmpOGE(leftValue, rightValue, "cmptmp") : builder->CreateICmpSGE(leftValue, rightValue, "cmptmp");
+                break;
+            case Operation::EQUAL:
+                this->lastValue = isFloat ? builder->CreateFCmpOEQ(leftValue, rightValue, "cmptmp") : builder->CreateICmpEQ(leftValue, rightValue, "cmptmp");
+                break;
+            case Operation::NOT_EQUAL:
+                this->lastValue = isFloat ? builder->CreateFCmpONE(leftValue, rightValue, "cmptmp") : builder->CreateICmpNE(leftValue, rightValue, "cmptmp");
+                break;
+            case Operation::AND:
+                this->lastValue = builder->CreateAnd(leftValue, rightValue, "andtmp");
+                break;
+            case Operation::OR:
+                this->lastValue = builder->CreateOr(leftValue, rightValue, "ortmp");
+                break;
+
+            default:
+                throw ParseError("Unknown binary operator during IR generation");
         }
     }
 

@@ -5,6 +5,7 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include "Operation.h"
 
 namespace raccoon::compiler::ast {
 
@@ -103,12 +104,12 @@ namespace raccoon::compiler::ast {
 
     class BinaryExpression : public Expr {
     public:
-        std::string op;
+        Operation op;
         std::unique_ptr<Expr> left;
         std::unique_ptr<Expr> right;
 
-        BinaryExpression(std::string op, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right) :
-        op(std::move(op)),
+        BinaryExpression(Operation op, std::unique_ptr<Expr> left, std::unique_ptr<Expr> right) :
+        op(op),
         left(std::move(left)),
         right(std::move(right)) {}
 

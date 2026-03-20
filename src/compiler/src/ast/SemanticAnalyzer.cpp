@@ -78,36 +78,50 @@ namespace raccoon::compiler::ast {
         auto rightType = this->lastType;
 
         if (!leftType || !rightType) {
-            throw ParseError("Invalid expression types.");
+            throw ParseError("Internal Error: Expression operands missing types.");
         }
 
         if (!(*leftType == *rightType)) {
-            throw ParseError("Type mismatch: " + typeToString(leftType.get()) + " vs " + typeToString(rightType.get()));
+            throw ParseError("Type mismatch: Cannot operate on " +
+                             typeToString(leftType.get()) + " and " + typeToString(rightType.get()));
         }
 
-        if (node.op == "+" || node.op == "-" || node.op == "*" || node.op == "/") {
-            if (leftType != PrimitiveType::Float && leftType != PrimitiveType::Int) {
-                throw ParseError("Operator " + node.op + " requires numeric types.");
-            }
-            this->lastType = leftType;
-        }
+        switch (node.op) {
+            case ast::Operation::ADD:
+            case ast::Operation::SUB:
+            case ast::Operation::MUL:
+            case ast::Operation::DIV:
+                if (leftType->getKind() != TypeKind::INT && leftType->getKind() != TypeKind::FLOAT) {
+                    throw ParseError("Arithmetic operators require numeric types (int or float).");
+                }
+                this->lastType = leftType;
+                break;
 
-        else if (node.op == "<" || node.op == ">" || node.op == "<=" || node.op == ">=") {
-            if (leftType != PrimitiveType::Float && leftType != PrimitiveType::Int) {
-                throw ParseError("Relational operator " + node.op + " requires numeric types.");
-            }
-            this->lastType = PrimitiveType::Bool;
-        }
+            case ast::Operation::LESSER:
+            case ast::Operation::GREATER:
+            case ast::Operation::LESSER_EQUAL:
+            case ast::Operation::GREATER_EQUAL:
+                if (leftType->getKind() != TypeKind::INT && leftType->getKind() != TypeKind::FLOAT) {
+                    throw ParseError("Relational operators require numeric types (int or float).");
+                }
+                this->lastType = PrimitiveType::Bool;
+                break;
 
-        else if (node.op == "==" || node.op == "!=") {
-            this->lastType = PrimitiveType::Bool;
-        }
+            case ast::Operation::EQUAL:
+            case ast::Operation::NOT_EQUAL:
+                this->lastType = PrimitiveType::Bool;
+                break;
 
-        else if (node.op == "and" || node.op == "or") {
-            if (leftType->getKind() != TypeKind::BOOL) {
-                throw ParseError("Logical operator " + node.op + " requires boolean types.");
-            }
-            this->lastType = PrimitiveType::Bool;
+            case ast::Operation::AND:
+            case ast::Operation::OR:
+                if (leftType->getKind() != TypeKind::BOOL) {
+                    throw ParseError("Logical operators (and, or) require boolean types.");
+                }
+                this->lastType = PrimitiveType::Bool;
+                break;
+
+            default:
+                throw ParseError("Internal Error: Unhandled binary operation in Semantic Analyzer.");
         }
     }
 
