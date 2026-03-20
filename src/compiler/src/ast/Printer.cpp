@@ -176,4 +176,14 @@ namespace raccoon::compiler::ast {
         indentLevel--;
     }
 
+    void Printer::visit(IfStmt& node) {
+        printIndent();
+        std::cout << "[IfStmt]" << std::endl;
+        indentLevel++;
+        node.condition->accept(*this);
+        node.thenBranch->accept(*this);
+        if (node.elseBranch) node.elseBranch->accept(*this);
+        indentLevel--;
+    }
+
 } // namespace raccoon::compiler::ast

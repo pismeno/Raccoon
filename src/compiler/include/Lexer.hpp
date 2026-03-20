@@ -13,7 +13,7 @@ namespace raccoon::compiler {
         NUMBER, IDENTIFIER, TRUE, FALSE,
         LPAREN, RPAREN, LBRACE, RBRACE,
         SEMICOLON, COMMA,
-        RETURN,
+        RETURN, IF, ELSE,
         EOF_TOKEN
     };
 

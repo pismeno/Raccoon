@@ -50,6 +50,7 @@ namespace raccoon::compiler {
     }
 
     std::unique_ptr<Stmt> Parser::statement() {
+        if (match(TokenType::IF)) return ifStatement();
         if (match(TokenType::LBRACE)) return block();
         if (match(TokenType::RETURN)) return ret();
 
@@ -200,6 +201,14 @@ namespace raccoon::compiler {
         if (peek().type != TokenType::SEMICOLON) expr = expression();
         consume(TokenType::SEMICOLON, "Expected ';' after return statement.");
         return std::make_unique<ReturnStmt>(std::move(expr));
+    }
+
+    std::unique_ptr<Stmt> Parser::ifStatement() {
+        std::unique_ptr<Expr> condition = expression();
+        std::unique_ptr<Stmt> thenBranch = statement();
+        std::unique_ptr<Stmt> elseBranch = nullptr;
+        if (match(TokenType::ELSE)) elseBranch = statement();
+        return std::make_unique<IfStmt>(std::move(condition), std::move(thenBranch), std::move(elseBranch));
     }
 
     std::unique_ptr<Expr> Parser::logicalOr() {

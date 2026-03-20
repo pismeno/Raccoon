@@ -15,6 +15,7 @@ namespace raccoon::compiler::ast {
     class FunctionDecl;
     class ReturnStmt;
     class DenStmt;
+    class IfStmt;
 
     class Visitor {
     public:
@@ -32,5 +33,6 @@ namespace raccoon::compiler::ast {
         virtual void visit(FunctionDecl& node) = 0;
         virtual void visit(ReturnStmt& node) = 0;
         virtual void visit(DenStmt& node) = 0;
+        virtual void visit(IfStmt& node) = 0;
     };
 } // namespace raccoon::compiler::ast

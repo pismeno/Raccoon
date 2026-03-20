@@ -195,7 +195,7 @@ namespace raccoon::compiler::ast {
         if (node.expr) node.expr->accept(*this);
         else this->lastType = PrimitiveType::Void;
         if (this->currentExpectedFunctionType == nullptr) throw ParseError("Cannot return from a non-function.");
-        if (!(*this->lastType == *this->currentExpectedFunctionType->returnType)) {
+        if (*this->lastType != *this->currentExpectedFunctionType->returnType) {
             throw ParseError("Type mismatch: Function return type does not match expression type.");
         }
         this->hasReturnStmt = true;
@@ -246,6 +246,16 @@ namespace raccoon::compiler::ast {
         }
 
         varTable.exitScope();
+    }
+
+    void SemanticAnalyzer::visit(IfStmt &node) {
+        node.condition->accept(*this);
+        if (*this->lastType != *PrimitiveType::Bool) {
+            throw ParseError("Condition in if statement must be a boolean.");
+        }
+
+        node.thenBranch->accept(*this);
+        if (node.elseBranch) node.elseBranch->accept(*this);
     }
 
     std::shared_ptr<Type> SemanticAnalyzer::checkType(const std::string& declaredTypeStr) {

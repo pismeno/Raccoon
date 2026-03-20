@@ -396,6 +396,41 @@ namespace raccoon::compiler::ast {
         currentDen = oldDen;
     }
 
+    void IRGenerator::visit(IfStmt& node) {
+        if (!node.condition) return;
+
+        node.condition->accept(*this);
+        llvm::Value* condVal = this->lastValue;
+
+        if (condVal->getType()->isFloatingPointTy()) {
+            condVal = builder->CreateFCmpONE(condVal, llvm::ConstantFP::get(condVal->getType(), 0.0), "ifcond");
+        } else if (condVal->getType()->isIntegerTy() && !condVal->getType()->isIntegerTy(1)) {
+            condVal = builder->CreateICmpNE(condVal, llvm::ConstantInt::get(condVal->getType(), 0), "ifcond");
+        }
+
+        llvm::Function* parentFunc = builder->GetInsertBlock()->getParent();
+        llvm::BasicBlock* thenBlock = llvm::BasicBlock::Create(*context, "if.then", parentFunc);
+        llvm::BasicBlock* elseBlock = llvm::BasicBlock::Create(*context, "if.else");
+        llvm::BasicBlock* mergeBlock = llvm::BasicBlock::Create(*context, "if.after");
+
+        builder->CreateCondBr(condVal, thenBlock, elseBlock);
+
+        builder->SetInsertPoint(thenBlock);
+        if (node.thenBranch) node.thenBranch->accept(*this);
+        if (!builder->GetInsertBlock()->getTerminator()) {
+            builder->CreateBr(mergeBlock);
+        }
+
+        parentFunc->insert(parentFunc->end(), elseBlock);
+        builder->SetInsertPoint(elseBlock);
+        if (node.elseBranch) node.elseBranch->accept(*this);
+        if (!builder->GetInsertBlock()->getTerminator()) {
+            builder->CreateBr(mergeBlock);
+        }
+
+        parentFunc->insert(parentFunc->end(), mergeBlock);
+        builder->SetInsertPoint(mergeBlock);
+    }
     llvm::Type* IRGenerator::getLLVMType(std::shared_ptr<Type> type) {
         if (!type) return builder->getVoidTy();
 

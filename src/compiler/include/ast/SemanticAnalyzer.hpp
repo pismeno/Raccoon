@@ -24,6 +24,7 @@ namespace raccoon::compiler::ast {
         void visit(FunctionDecl& node) override;
         void visit(ReturnStmt& node) override;
         void visit(DenStmt& node) override;
+        void visit(IfStmt& node) override;
     private:
         VarTable varTable;
         std::shared_ptr<Type> lastType = PrimitiveType::Unknown;

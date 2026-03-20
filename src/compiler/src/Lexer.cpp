@@ -52,6 +52,8 @@ namespace raccoon::compiler {
                 else if (word == "let") tokens.push_back({TokenType::LET, word});
                 else if (word == "be") tokens.push_back({TokenType::BE, word});
                 else if (word == "mut") tokens.push_back({TokenType::MUTABLE, word});
+                else if (word == "if") tokens.push_back({TokenType::IF, word});
+                else if (word == "else") tokens.push_back({TokenType::ELSE, word});
                 else if (word == "true") tokens.push_back({TokenType::TRUE, word});
                 else if (word == "false") tokens.push_back({TokenType::FALSE, word});
                 else if (word == "return") tokens.push_back({TokenType::RETURN, word});

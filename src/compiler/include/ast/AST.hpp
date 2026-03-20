@@ -183,4 +183,18 @@ namespace raccoon::compiler::ast {
 
         void accept(Visitor& visitor) override;
     };
+
+    class IfStmt : public Stmt {
+        public:
+        std::unique_ptr<Expr> condition;
+        std::unique_ptr<Stmt> thenBranch;
+        std::unique_ptr<Stmt> elseBranch;
+
+        IfStmt(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenBranch, std::unique_ptr<Stmt> elseBranch) :
+        condition(std::move(condition)),
+        thenBranch(std::move(thenBranch)),
+        elseBranch(std::move(elseBranch)) {}
+
+        void accept(Visitor& visitor) override;
+    };
 } // raccoon::compiler::ast
