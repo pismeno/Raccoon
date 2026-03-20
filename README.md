@@ -28,7 +28,7 @@ reassigning variables: `age = age + 1;`
 #### Basic Types
 - `int`
 - `float`
-- `bool`
+- `boolean`
 - `void`
 
 ### Functions
@@ -42,6 +42,28 @@ let add be (int, int) int = (a, b) {
 ```
 functions can also be declared as mutable using the `mut` keyword.
 
+### Operators
+#### Arithmetic Operators
+| Operator | Description |
+| --- | --- |
+| `+` | addition |
+| `-` | subtraction |
+| `*` | multiplication |
+| `/` | division |
+
+#### Logical Operators
+| Operator | Description |
+|----------| --- |
+| `and`    | logical AND |
+| `or`     | logical OR |
+| `!`      | logical NOT |
+| `==`     | equality |
+| `!=`     | inequality |
+| `<`      | less than |
+| `>`      | greater than |
+| `<=`     | less than or equal to |
+| `>=`     | greater than or equal to |
+
 ### If-Else statements
 example of if-else statement:
 ```raccoon
@@ -53,7 +75,7 @@ if age > 19 {
 ```
 
 ### Dens (Namespaces)
-`den` blocks act as scoped namespaces to prevent naming collisions.
+`den` blocks act as namespaces to prevent naming collisions.
 ```raccoon
 den Math {
     let PI be float = 3.14;
