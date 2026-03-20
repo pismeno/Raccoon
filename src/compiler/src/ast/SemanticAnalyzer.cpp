@@ -151,6 +151,8 @@ namespace raccoon::compiler::ast {
             if (!(*this->lastType == *declaredType)) {
                 throw ParseError("Type mismatch: Cannot assign " + typeToString(lastType.get()) + " to " + node.type);
             }
+        } else {
+            throw ParseError("Variable '" + node.name + "' declaration requires an initializer.");
         }
 
         varTable.define(node.name, declaredType, node.isMutable);
