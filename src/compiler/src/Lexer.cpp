@@ -17,7 +17,20 @@ namespace raccoon::compiler {
                 continue;
             }
 
-            if (c == '=') { tokens.push_back({TokenType::EQUAL, "="}); cursor++; continue; }
+            if (c == '=') {
+                if (cursor + 1 < source.length()) {
+                    if (source[cursor + 1] == '=') { tokens.push_back({TokenType::EQUAL, "=="}); cursor += 2; continue; }
+                    if (source[cursor + 1] == '<') { tokens.push_back({TokenType::LESSER_EQUAL, "=<"}); cursor += 2; continue; }
+                    if (source[cursor + 1] == '>') { tokens.push_back({TokenType::GREATER_EQUAL, ">="}); cursor += 2; continue; }
+                    if (source[cursor + 1] == '!') { tokens.push_back({TokenType::NOT_EQUAL, "!="}); cursor += 2; continue; }
+                    tokens.push_back({TokenType::ASSIGN, "="}); cursor++; continue;
+                } else {
+                    tokens.push_back({TokenType::ASSIGN, "="}); cursor++; continue;
+                }
+            }
+            if (c == '!') { tokens.push_back({TokenType::NOT, "!"}); cursor++; continue; }
+            if (c == '<') { tokens.push_back({TokenType::LESSER, "<"}); cursor++; continue; }
+            if (c == '>') { tokens.push_back({TokenType::GREATER, ">"}); cursor++; continue; }
             if (c == '+') { tokens.push_back({TokenType::PLUS, "+"}); cursor++; continue; }
             if (c == '-') { tokens.push_back({TokenType::MINUS, "-"}); cursor++; continue; }
             if (c == '*') { tokens.push_back({TokenType::TIMES, "*"}); cursor++; continue; }
@@ -40,6 +53,8 @@ namespace raccoon::compiler {
                 else if (word == "be") tokens.push_back({TokenType::BE, word});
                 else if (word == "mut") tokens.push_back({TokenType::MUTABLE, word});
                 else if (word == "return") tokens.push_back({TokenType::RETURN, word});
+                else if (word == "and") tokens.push_back({TokenType::AND, word});
+                else if (word == "or") tokens.push_back({TokenType::OR, word});
                 else tokens.push_back({TokenType::IDENTIFIER, word});
                 continue;
             }

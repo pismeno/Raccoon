@@ -43,6 +43,9 @@ namespace raccoon::compiler {
         std::unique_ptr<Stmt> ret();
 
         std::unique_ptr<Expr> expression();
+        std::unique_ptr<Expr> logicalOr();
+        std::unique_ptr<Expr> logicalAnd();
+        std::unique_ptr<Expr> comparison();
         std::unique_ptr<Expr> primary();
         std::unique_ptr<Expr> term();
         std::unique_ptr<Expr> factor();

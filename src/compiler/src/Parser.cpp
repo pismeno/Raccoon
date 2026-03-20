@@ -56,7 +56,7 @@ namespace raccoon::compiler {
         if (match(TokenType::RETURN)) return ret();
 
         if (check(TokenType::IDENTIFIER)) {
-            if (next().type == TokenType::EQUAL) {
+            if (next().type == TokenType::ASSIGN) {
                 return varAssignment();
             }
 
@@ -102,7 +102,7 @@ namespace raccoon::compiler {
         Token type = consume(TokenType::IDENTIFIER, "Expected variable type.");
 
         std::unique_ptr<Expr> initializer = nullptr;
-        if (match(TokenType::EQUAL)) {
+        if (match(TokenType::ASSIGN)) {
             initializer = expression();
         }
 
@@ -112,7 +112,7 @@ namespace raccoon::compiler {
 
     std::unique_ptr<Stmt> Parser::varAssignment() {
         Token name = consume(TokenType::IDENTIFIER, "Expected variable name.");
-        consume(TokenType::EQUAL, "Expected '=' after variable name.");
+        consume(TokenType::ASSIGN, "Expected '=' after variable name.");
         std::unique_ptr<Expr> value = expression();
         consume(TokenType::SEMICOLON, "Expected ';' after variable assignment.");
         return std::make_unique<VariableAssign>(name.lexeme, std::move(value));
@@ -131,7 +131,7 @@ namespace raccoon::compiler {
         Token returnType = consume(TokenType::IDENTIFIER, "Expected return type.");
 
         std::unique_ptr<Expr> initializer = nullptr;
-        if (match(TokenType::EQUAL)) {
+        if (match(TokenType::ASSIGN)) {
             initializer = expression();
         }
 
@@ -152,7 +152,7 @@ namespace raccoon::compiler {
         if (isFuncExpression()) {
             return funcExpression();
         }
-        return term();
+        return logicalOr();
     }
 
     std::unique_ptr<Expr> Parser::funcExpression() {
@@ -176,13 +176,15 @@ namespace raccoon::compiler {
         if (!check(TokenType::LPAREN)) return false;
 
         int i = 1;
-        int cursor = 1;
+        int signatureCursor = 1;
 
-        while (cursor > 0 && (current + i) < tokens.size()) {
-            if (peek(i).type == TokenType::LPAREN) cursor++;
-            else if (peek(i).type == TokenType::RPAREN) cursor--;
+        while (signatureCursor > 0 && (current + i) < tokens.size()) {
+            if (peek(i).type == TokenType::LPAREN) signatureCursor++;
+            else if (peek(i).type == TokenType::RPAREN) signatureCursor--;
             i++;
         }
+
+        if ((current + i) >= tokens.size()) return false;
 
         return peek(i).type == TokenType::LBRACE;
     }
@@ -204,8 +206,40 @@ namespace raccoon::compiler {
         return std::make_unique<ReturnStmt>(std::move(expr));
     }
 
+    std::unique_ptr<Expr> Parser::logicalOr() {
+        auto left = logicalAnd();
+        while (match(TokenType::OR)) {
+            std::string op = previous().lexeme;
+            auto right = logicalAnd();
+            left = std::make_unique<BinaryExpression>(op, std::move(left), std::move(right));
+        }
+        return left;
+    }
+
+    std::unique_ptr<Expr> Parser::logicalAnd() {
+        auto left = comparison();
+        while (match(TokenType::AND)) {
+            std::string op = previous().lexeme;
+            auto right = comparison();
+            left = std::make_unique<BinaryExpression>(op, std::move(left), std::move(right));
+        }
+        return left;
+    }
+
+    std::unique_ptr<Expr> Parser::comparison() {
+        auto left = term();
+        while (match(TokenType::LESSER) || match(TokenType::GREATER) ||
+               match(TokenType::LESSER_EQUAL) || match(TokenType::GREATER_EQUAL) ||
+               match(TokenType::EQUAL) || match(TokenType::NOT_EQUAL)) {
+            std::string op = previous().lexeme;
+            auto right = term();
+            left = std::make_unique<BinaryExpression>(op, std::move(left), std::move(right));
+        }
+        return left;
+    }
+
     std::unique_ptr<Expr> Parser::unary() {
-        if (match(TokenType::MINUS)) {
+        if (match(TokenType::MINUS) || match(TokenType::NOT)) {
             std::string op = previous().lexeme;
             std::unique_ptr<Expr> right = unary();
             return std::make_unique<UnaryExpression>(op, std::move(right));

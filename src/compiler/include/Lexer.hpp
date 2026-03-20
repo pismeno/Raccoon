@@ -7,7 +7,9 @@ namespace raccoon::compiler {
     enum class TokenType {
         LET, BE, MUTABLE,
         DEN,
-        EQUAL, TIMES, PLUS, MINUS, SLASH,
+        ASSIGN,
+        TIMES, PLUS, MINUS, SLASH,
+        GREATER, LESSER, GREATER_EQUAL, LESSER_EQUAL, EQUAL, NOT_EQUAL, AND, OR, NOT,
         NUMBER, IDENTIFIER,
         LPAREN, RPAREN, LBRACE, RBRACE,
         SEMICOLON, COMMA,
