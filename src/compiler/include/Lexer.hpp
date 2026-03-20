@@ -30,4 +30,4 @@ namespace raccoon::compiler {
 
         std::vector<Token> tokenize();
     };
-}
+} // namespace raccoon::compiler

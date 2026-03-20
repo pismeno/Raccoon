@@ -41,4 +41,4 @@ namespace raccoon::compiler::ast {
         llvm::Type* getLLVMType(std::shared_ptr<Type> type);
     };
 
-} // raccoon
+} // raccoon namespace::compiler::ast

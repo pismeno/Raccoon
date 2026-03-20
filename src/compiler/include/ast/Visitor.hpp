@@ -33,4 +33,4 @@ namespace raccoon::compiler::ast {
         virtual void visit(ReturnStmt& node) = 0;
         virtual void visit(DenStmt& node) = 0;
     };
-}
+} // namespace raccoon::compiler::ast

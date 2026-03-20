@@ -19,4 +19,4 @@ namespace raccoon::compiler::ast {
         }
         return true;
     }
-}
+} // namespace raccoon::compiler::ast

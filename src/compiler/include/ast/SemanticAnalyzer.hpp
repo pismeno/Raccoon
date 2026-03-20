@@ -32,4 +32,4 @@ namespace raccoon::compiler::ast {
         static std::shared_ptr<Type> checkType(const std::string& declaredTypeStr);
     };
 
-} // raccoon
+} // namespace raccoon::compiler::ast

@@ -182,4 +182,4 @@ namespace raccoon::compiler::ast {
 
         void accept(Visitor& visitor) override;
     };
-} // raccoon
+} // raccoon::compiler::ast

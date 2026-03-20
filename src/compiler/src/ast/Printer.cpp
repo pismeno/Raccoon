@@ -176,4 +176,4 @@ namespace raccoon::compiler::ast {
         indentLevel--;
     }
 
-} // namespace raccoon
+} // namespace raccoon::compiler::ast

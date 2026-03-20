@@ -109,4 +109,4 @@ namespace raccoon::compiler::ast {
         }
         return nullptr;
     }
-} // namespace raccoon
+} // namespace raccoon::compiler::ast

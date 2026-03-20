@@ -30,4 +30,4 @@ namespace raccoon::compiler::ast {
         std::string formatLiteral(const LiteralValue& value);
     };
 
-} // namespace raccoon
+} // namespace raccoon::compiler::ast

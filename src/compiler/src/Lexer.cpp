@@ -59,4 +59,4 @@ namespace raccoon::compiler {
         tokens.push_back({TokenType::EOF_TOKEN, ""});
         return tokens;
     }
-}
+} // namespace raccoon::compiler

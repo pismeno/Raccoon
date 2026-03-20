@@ -37,4 +37,4 @@ namespace raccoon::compiler::ast {
         std::vector<std::string> activeDens;
     };
 
-} // namespace raccoon
+} // namespace raccoon::compiler::ast

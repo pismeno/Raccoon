@@ -55,4 +55,4 @@ namespace raccoon::compiler {
         int current = 0;
     };
 
-} // namespace raccoon
+} // namespace raccoon::compiler

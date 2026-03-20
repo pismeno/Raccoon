@@ -53,4 +53,4 @@ namespace raccoon::compiler::ast {
     void DenStmt::accept(Visitor& visitor) {
         visitor.visit(*this);
     }
-} // raccoon
+} // namespace raccoon

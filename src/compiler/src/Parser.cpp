@@ -256,4 +256,4 @@ namespace raccoon::compiler {
         return ParseError("[Line " /*+ std::to_string(token.line) +*/ "] Error at '" + token.lexeme + "': " + message);
     }
 
-} // namespace raccoon
+} // namespace raccoon::compiler

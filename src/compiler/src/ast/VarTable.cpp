@@ -56,4 +56,4 @@ namespace raccoon::compiler::ast {
         return ss.str();
     }
 
-}
+} // namespace raccoon::compiler::ast

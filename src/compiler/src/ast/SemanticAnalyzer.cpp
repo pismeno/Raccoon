@@ -203,4 +203,4 @@ namespace raccoon::compiler::ast {
         if (declaredType == nullptr) throw ParseError("Unknown type: " + declaredTypeStr);
         return declaredType;
     }
-} // raccoon
+} // namespace raccoon::compiler::ast
