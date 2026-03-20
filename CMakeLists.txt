@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Raccoon)
+project(raccoon)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -18,11 +18,11 @@ include_directories(${LLVM_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS})
 file(GLOB_RECURSE COMPILER_SOURCES "src/compiler/*.cpp")
 
 # 2. Add the executable using the collected list
-add_executable(Raccoon ${COMPILER_SOURCES})
+add_executable(raccoon ${COMPILER_SOURCES})
 
 # 3. (Optional) Helpful for many IDEs to see the headers too
 file(GLOB_RECURSE COMPILER_HEADERS "src/compiler/*.hpp" "src/compiler/*.h")
-target_sources(Raccoon PRIVATE ${COMPILER_HEADERS})
+target_sources(raccoon PRIVATE ${COMPILER_HEADERS})
 
 llvm_map_components_to_libnames(llvm_libs
         support
@@ -32,10 +32,10 @@ llvm_map_components_to_libnames(llvm_libs
         native
 )
 
-target_link_libraries(Raccoon
+target_link_libraries(raccoon
         ${llvm_libs}
         ZLIB::ZLIB
         ${ZSTD_LIB}
 )
 
-target_include_directories(Raccoon PUBLIC ${LLVM_INCLUDE_DIRS})
+target_include_directories(raccoon PUBLIC ${LLVM_INCLUDE_DIRS})
