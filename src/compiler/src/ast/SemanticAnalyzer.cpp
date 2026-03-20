@@ -6,6 +6,7 @@
 namespace raccoon::compiler::ast {
 
     void SemanticAnalyzer::visit(ExprStmt &node) {
+        if (currentExpectedFunctionType == nullptr) throw ParseError("Expression statements are not allowed outside of function.");
         if (node.expr) node.expr->accept(*this);
     }
 
@@ -32,7 +33,7 @@ namespace raccoon::compiler::ast {
         std::shared_ptr<FunctionType> signature = this->currentExpectedFunctionType;
 
         if (node.paramNames.size() != signature->params.size()) {
-            throw ParseError("Arity mismatch: Function expression parameter count does not match the declaration.");
+            throw ParseError("Signature mismatch: Function expression parameter count does not match the declaration.");
         }
 
         varTable.enterScope();
