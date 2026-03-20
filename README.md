@@ -23,7 +23,7 @@ The syntax for declaring variables is: `let {name} be [modifier keywords] {type}
 example of immutable variable: `let pi be float = 3.14;`  
 example of mutable variable: `let age be mut int = 22;`  
   
-reassignable variables: `age = 22;` 
+reassigning variables: `age = age + 1;` 
 
 #### Basic Types
 - `int`
