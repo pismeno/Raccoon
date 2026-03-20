@@ -10,65 +10,76 @@
 #include <llvm/Support/raw_os_ostream.h>
 #include "include/CLI11.hpp"
 
-int main() {
+std::string get_file_contents(const std::string& sourceFileName) {
+    std::ifstream file(sourceFileName);
+
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + sourceFileName);
+    }
+
+    return std::string((std::istreambuf_iterator<char>(file)),
+                       std::istreambuf_iterator<char>());
+}
+
+int main(int argc, char** argv) {
     using namespace raccoon::compiler;
 
     CLI::App raccoonCli{"Raccoon Compiler"};
 
-    std::string source = "den Main {"
-                         "let add be (int, int)int = (a, b) {return a + b;};"
-                         "let xx be mut int = 12;"
-                         "let main be ()int = () {"
-                         "let x be int = -1109 + 12; "
-                         "let y be mut int = x * -2; "
-                         "y = 99; "
-                         "print(x - y);"
-                         "return add(x, y); "
-                         "};"
-                         "let secon be mut ()int = main;"
-                         "};";
-    Lexer lexer(source);
-    auto tokens = lexer.tokenize();
+    CLI::App* print = raccoonCli.add_subcommand("print", "Compile a source file and output the IR in the console.");
 
-    for (const auto& token : tokens) {
-        std::cout << "Token Type: " << static_cast<int>(token.type)
-                  << " | Lexeme: [" << token.lexeme << "]" << std::endl;
-    }
+    std::string sourceFileName;
+    std::string outputFileName = "output.ll";
 
-    Parser parser(tokens);
+    print->add_option("source", sourceFileName, "Source file to compile")->required();
+    print->add_option("-o,--output", outputFileName, "Output binary name");
 
-    try {
-        std::unique_ptr<ast::BlockStmt> root = parser.parse();
+    CLI11_PARSE(raccoonCli, argc, argv);
 
-        ast::SemanticAnalyzer semanticAnalyzer;
-        ast::Printer printer;
-        ast::IRGenerator irGenerator;
+    if (*print) {
+        Lexer lexer(get_file_contents(sourceFileName));
+        auto tokens = lexer.tokenize();
 
-        root->accept(semanticAnalyzer);
-
-        std::cout << "--- Raccoon AST ---" << std::endl;
-        root->accept(printer);
-
-        std::cout << "--- Raccoon IR ---" << std::endl;
-        root->accept(irGenerator);
-        irGenerator.module->print(llvm::outs(), nullptr);
-
-        std::ofstream file("output.ll");
-        if (!file.is_open()) {
-            std::cerr << "Could not open file 'output.ll' for writing." << std::endl;
-            return 1;
+        for (const auto& token : tokens) {
+            std::cout << "Token Type: " << static_cast<int>(token.type)
+                      << " | Lexeme: [" << token.lexeme << "]" << std::endl;
         }
 
-        llvm::raw_os_ostream dest(file);
+        Parser parser(tokens);
 
-        irGenerator.module->print(dest, nullptr);
-        dest.flush();
-        file.close();
+        try {
+            std::unique_ptr<ast::BlockStmt> root = parser.parse();
 
-        std::cout << "Successfully generated output.ll!" << std::endl;
+            ast::SemanticAnalyzer semanticAnalyzer;
+            ast::Printer printer;
+            ast::IRGenerator irGenerator;
 
-    } catch (const ParseError& e) {
-        std::cerr << e.what() << std::endl;
+            root->accept(semanticAnalyzer);
+
+            std::cout << "--- Raccoon AST ---" << std::endl;
+            root->accept(printer);
+
+            std::cout << "--- Raccoon IR ---" << std::endl;
+            root->accept(irGenerator);
+            irGenerator.module->print(llvm::outs(), nullptr);
+
+            std::ofstream file(outputFileName);
+            if (!file.is_open()) {
+                std::cerr << "Could not open file '" << outputFileName << "' for writing." << std::endl;
+                return 1;
+            }
+
+            llvm::raw_os_ostream dest(file);
+
+            irGenerator.module->print(dest, nullptr);
+            dest.flush();
+            file.close();
+
+            std::cout << "Successfully generated output.ll!" << std::endl;
+
+        } catch (const ParseError& e) {
+            std::cerr << e.what() << std::endl;
+        }
     }
 
     return 0;
