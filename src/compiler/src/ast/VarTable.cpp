@@ -65,7 +65,7 @@ namespace raccoon::compiler::ast {
     }
 
     void VarTable::exitDens(const std::string name) {
-        exitDens(countOccurrences(name, "::"));
+        exitDens(countOccurrences(name, "::") + 1);
     }
 
     void VarTable::define(const std::string& name, const std::shared_ptr<Type> type, bool isMutable) {
