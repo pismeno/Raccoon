@@ -8,7 +8,7 @@ Standard library, classes (or at least structs that will be capable of provide s
 # Languages, libraries
 Compiler:  
 languge: C++  
-libs: LLVM, ZLIB, Zstd  
+libs: LLVM, ZLIB, Zstd, CLI11 
   
 Runtime:  
 language: C
