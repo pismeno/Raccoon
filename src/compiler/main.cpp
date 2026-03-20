@@ -6,10 +6,14 @@
 #include "include/ast/Printer.hpp"
 #include "include/ast/SemanticAnalyzer.hpp"
 #include "include/ast/IRGenerator.hpp"
+#include <fstream>
+#include <llvm/Support/raw_os_ostream.h>
+#include "include/CLI11.hpp"
 
 int main() {
-
     using namespace raccoon::compiler;
+
+    CLI::App raccoonCli{"Raccoon Compiler"};
 
     std::string source = "den Main {"
                          "let add be (int, int)int = (a, b) {return a + b;};"
@@ -48,6 +52,20 @@ int main() {
         std::cout << "--- Raccoon IR ---" << std::endl;
         root->accept(irGenerator);
         irGenerator.module->print(llvm::outs(), nullptr);
+
+        std::ofstream file("output.ll");
+        if (!file.is_open()) {
+            std::cerr << "Could not open file 'output.ll' for writing." << std::endl;
+            return 1;
+        }
+
+        llvm::raw_os_ostream dest(file);
+
+        irGenerator.module->print(dest, nullptr);
+        dest.flush();
+        file.close();
+
+        std::cout << "Successfully generated output.ll!" << std::endl;
 
     } catch (const ParseError& e) {
         std::cerr << e.what() << std::endl;
