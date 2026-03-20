@@ -21,6 +21,11 @@ namespace raccoon::compiler {
     Token Parser::previous() const { return tokens[current - 1]; }
     bool Parser::check(TokenType type) const { return !isAtEnd() && peek().type == type; }
 
+    Token Parser::peek(int distance) const {
+        if (current + distance >= tokens.size()) return tokens.back();
+        return tokens[current + distance];
+    }
+
     bool Parser::match(TokenType type) {
         if (check(type)) {
             advance();
@@ -144,10 +149,8 @@ namespace raccoon::compiler {
     }
 
     std::unique_ptr<Expr> Parser::expression() {
-        if (check(TokenType::LPAREN)) {
-            if (next().type == TokenType::RPAREN || next().type == TokenType::IDENTIFIER) {
-                return funcExpression();
-            }
+        if (isFuncExpression()) {
+            return funcExpression();
         }
         return term();
     }
@@ -167,6 +170,21 @@ namespace raccoon::compiler {
         std::unique_ptr<BlockStmt> body = block();
 
         return std::make_unique<FunctionExpr>(paramNames, std::move(body));
+    }
+
+    bool Parser::isFuncExpression() {
+        if (!check(TokenType::LPAREN)) return false;
+
+        int i = 1;
+        int cursor = 1;
+
+        while (cursor > 0 && (current + i) < tokens.size()) {
+            if (peek(i).type == TokenType::LPAREN) cursor++;
+            else if (peek(i).type == TokenType::RPAREN) cursor--;
+            i++;
+        }
+
+        return peek(i).type == TokenType::LBRACE;
     }
 
     std::unique_ptr<Expr> Parser::finishCall(const std::string& name) {
@@ -222,33 +240,25 @@ namespace raccoon::compiler {
 
     std::unique_ptr<Expr> Parser::primary() {
         if (match(TokenType::NUMBER)) {
-            std::string text = previous().lexeme;
-            try {
-                int32_t value = std::stoi(text);
-                return std::make_unique<LiteralExpr>(value);
-            } catch (const std::out_of_range&) {
-                throw error(previous(), "Number exceeds 32-bit integer range: " + text);
-            } catch (...) {
-                throw error(previous(), "Invalid number: " + text);
-            }
+            return std::make_unique<LiteralExpr>(std::stoi(previous().lexeme));
         }
 
         if (match(TokenType::IDENTIFIER)) {
-            Token name = previous(); // Save the name immediately!
+            std::string name = previous().lexeme;
 
-            // If followed by '(', it's a call
             if (match(TokenType::LPAREN)) {
-                return finishCall(name.lexeme);
+                return finishCall(name);
             }
 
-            return std::make_unique<VariableExpr>(name.lexeme);
+            return std::make_unique<VariableExpr>(name);
         }
 
         if (match(TokenType::LPAREN)) {
-            auto expr = expression();
+            std::unique_ptr<Expr> expr = expression();
             consume(TokenType::RPAREN, "Expected ')' after expression.");
             return expr;
         }
+
         throw error(peek(), "Expected expression.");
     }
 
