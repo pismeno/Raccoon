@@ -273,7 +273,9 @@ namespace raccoon::compiler {
     }
 
     std::unique_ptr<Expr> Parser::primary() {
-        if (match(TokenType::NUMBER)) {
+        if (match(TokenType::NUMBER) || match(TokenType::TRUE) || match(TokenType::FALSE)) {
+            if (previous().type == TokenType::TRUE) return std::make_unique<LiteralExpr>(true);
+            if (previous().type == TokenType::FALSE) return std::make_unique<LiteralExpr>(false);
             return std::make_unique<LiteralExpr>(std::stoi(previous().lexeme));
         }
 

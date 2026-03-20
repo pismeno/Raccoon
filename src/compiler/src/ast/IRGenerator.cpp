@@ -191,6 +191,22 @@ namespace raccoon::compiler::ast {
         } else if (node.op == "/") {
             this->lastValue = isFloat ? builder->CreateFDiv(leftValue, rightValue, "divtmp")
                                       : builder->CreateSDiv(leftValue, rightValue, "divtmp");
+        } else if (node.op == "<") {
+            this->lastValue = builder->CreateICmpSLT(leftValue, rightValue, "cmptmp");
+        } else if (node.op == ">") {
+            this->lastValue = builder->CreateICmpSGT(leftValue, rightValue, "cmptmp");
+        } else if (node.op == "<=") {
+            this->lastValue = builder->CreateICmpSLE(leftValue, rightValue, "cmptmp");
+        } else if (node.op == ">=") {
+            this->lastValue = builder->CreateICmpSGE(leftValue, rightValue, "cmptmp");
+        } else if (node.op == "==") {
+            this->lastValue = builder->CreateICmpEQ(leftValue, rightValue, "cmptmp");
+        } else if (node.op == "!=") {
+            this->lastValue = builder->CreateICmpNE(leftValue, rightValue, "cmptmp");
+        } else if (node.op == "and") {
+            this->lastValue = builder->CreateAnd(leftValue, rightValue, "andtmp");
+        } else if (node.op == "or") {
+            this->lastValue = builder->CreateOr(leftValue, rightValue, "ortmp");
         } else {
             throw ParseError("Unknown binary operator: " + node.op);
         }

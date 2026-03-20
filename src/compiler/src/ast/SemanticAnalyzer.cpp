@@ -71,22 +71,44 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(BinaryExpression &node) {
-        if (node.left) node.left->accept(*this);
-        std::shared_ptr<Type> leftType = this->lastType;
+        node.left->accept(*this);
+        auto leftType = this->lastType;
 
-        if (node.right) node.right->accept(*this);
-        std::shared_ptr<Type> rightType = this->lastType;
+        node.right->accept(*this);
+        auto rightType = this->lastType;
 
         if (!leftType || !rightType) {
             throw ParseError("Invalid expression types.");
         }
 
         if (!(*leftType == *rightType)) {
-            throw ParseError("Type mismatch: Cannot operate on " +
-                typeToString(leftType.get()) + " and " + typeToString(rightType.get()));
+            throw ParseError("Type mismatch: " + typeToString(leftType.get()) + " vs " + typeToString(rightType.get()));
         }
 
-        this->lastType = leftType;
+        if (node.op == "+" || node.op == "-" || node.op == "*" || node.op == "/") {
+            if (leftType != PrimitiveType::Float && leftType != PrimitiveType::Int) {
+                throw ParseError("Operator " + node.op + " requires numeric types.");
+            }
+            this->lastType = leftType;
+        }
+
+        else if (node.op == "<" || node.op == ">" || node.op == "<=" || node.op == ">=") {
+            if (leftType != PrimitiveType::Float && leftType != PrimitiveType::Int) {
+                throw ParseError("Relational operator " + node.op + " requires numeric types.");
+            }
+            this->lastType = PrimitiveType::Bool;
+        }
+
+        else if (node.op == "==" || node.op == "!=") {
+            this->lastType = PrimitiveType::Bool;
+        }
+
+        else if (node.op == "and" || node.op == "or") {
+            if (leftType->getKind() != TypeKind::BOOL) {
+                throw ParseError("Logical operator " + node.op + " requires boolean types.");
+            }
+            this->lastType = PrimitiveType::Bool;
+        }
     }
 
     void SemanticAnalyzer::visit(BlockStmt &node) {
