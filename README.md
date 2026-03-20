@@ -13,6 +13,15 @@ Runtime:
 language: C
 
 ## Raccoon Syntax
+- [Basics](#basics)
+- [Variables & Constants](#variables--constants)
+- [Operators](#operators)
+- [Arithmetic Operators](#arithmetic-operators)
+- [Logical Operators](#logical-operators)
+- [Functions](#functions)
+- [If-Else statements](#if-else-statements)
+- [Dens (Namespaces)](#dens-namespaces)
+
 ### Basics
 The only allowed statements outside of functions are `let` and `den`, so declaring variables, functions, classes and seting dens (namespaces).  
 The program runs from the `main` function. The file extension for raccoon source files is `.trash`.
@@ -30,17 +39,6 @@ reassigning variables: `age = age + 1;`
 - `float`
 - `boolean`
 - `void`
-
-### Functions
-Functions in Raccoon are handled same as variables, but their type is signature and return type.  
-So the syntax for declaring functions is: `let {name} be [modifier keywords] ({parameter type list}) {return type} = ({parameter name list}) {function body};`  
-example of function:  
-```raccoon
-let add be (int, int) int = (a, b) {
-    return a + b;
-}
-```
-functions can also be declared as mutable using the `mut` keyword.
 
 ### Operators
 #### Arithmetic Operators
@@ -63,6 +61,18 @@ functions can also be declared as mutable using the `mut` keyword.
 | `>`      | greater than |
 | `<=`     | less than or equal to |
 | `>=`     | greater than or equal to |
+
+
+### Functions
+Functions in Raccoon are handled same as variables, but their type is signature and return type.  
+So the syntax for declaring functions is: `let {name} be [modifier keywords] ({parameter type list}) {return type} = ({parameter name list}) {function body};`  
+example of function:  
+```raccoon
+let add be (int, int) int = (a, b) {
+    return a + b;
+}
+```
+functions can also be declared as mutable using the `mut` keyword.
 
 ### If-Else statements
 example of if-else statement:
