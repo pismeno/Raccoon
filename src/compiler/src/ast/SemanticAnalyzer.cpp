@@ -241,13 +241,13 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(DenStmt &node) {
-        varTable.enterScope(node.name);
+        varTable.enterDens(node.name);
 
         for (const auto& stmt : node.contents) {
             if (stmt) stmt->accept(*this);
         }
 
-        varTable.exitScope();
+        varTable.exitDens(node.name);
     }
 
     void SemanticAnalyzer::visit(IfStmt &node) {

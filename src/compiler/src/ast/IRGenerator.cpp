@@ -384,16 +384,13 @@ namespace raccoon::compiler::ast {
     }
 
     void IRGenerator::visit(DenStmt& node) {
-        std::string oldDen = currentDen;
-        currentDen = node.name;
-        varTable.enterScope(node.name);
+        varTable.enterDens(node.name);
 
         for (const auto& stmt : node.contents) {
             if (stmt) stmt->accept(*this);
         }
 
-        varTable.exitScope();
-        currentDen = oldDen;
+        varTable.exitDens(node.name);
     }
 
     void IRGenerator::visit(IfStmt& node) {

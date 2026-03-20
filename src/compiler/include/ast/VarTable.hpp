@@ -22,8 +22,12 @@ namespace raccoon::compiler::ast {
     public:
         VarTable();
 
-        void enterScope(const std::string& denName = "");
+        void enterScope();
         void exitScope();
+
+        void enterDens(const std::string name);
+        void exitDens(const unsigned int numDens = 1);
+        void exitDens(const std::string name);
 
         void define(const std::string& name, const std::shared_ptr<Type>, bool isImmutable);
         void define(const std::string& name, VarInfo info);
