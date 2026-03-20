@@ -204,10 +204,12 @@ namespace raccoon::compiler {
     }
 
     std::unique_ptr<Stmt> Parser::ifStatement() {
-        std::unique_ptr<Expr> condition = expression();
+        std::unique_ptr<Expr> condition = logicalOr();
         std::unique_ptr<Stmt> thenBranch = statement();
         std::unique_ptr<Stmt> elseBranch = nullptr;
-        if (match(TokenType::ELSE)) elseBranch = statement();
+        if (match(TokenType::ELSE)) {
+            elseBranch = statement();
+        }
         return std::make_unique<IfStmt>(std::move(condition), std::move(thenBranch), std::move(elseBranch));
     }
 
