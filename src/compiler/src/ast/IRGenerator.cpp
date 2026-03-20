@@ -27,7 +27,7 @@ namespace raccoon::compiler::ast {
 
     void IRGenerator::visit(VariableExpr& node) {
         std::optional<VarInfo> varInfo = varTable.lookup(node.name);
-        if (!varInfo) throw ParseError("Undefined variable: " + node.name);
+        if (!varInfo) throw CompileError("Undefined variable: " + node.name);
 
         if (builder->GetInsertBlock()) {
             if (!varInfo->isMutable && varInfo->type->getKind() == TypeKind::FUNCTION) {
@@ -43,7 +43,7 @@ namespace raccoon::compiler::ast {
 
     void IRGenerator::visit(FunctionExpr& node) {
         std::shared_ptr<FunctionType> signature = this->currentExpectedFunctionType;
-        if (!signature) throw ParseError("Missing function signature during IR generation.");
+        if (!signature) throw CompileError("Missing function signature during IR generation.");
 
         std::string funcName = this->currentExpectedFuncName;
         if (funcName.empty()) {
@@ -67,6 +67,7 @@ namespace raccoon::compiler::ast {
         builder->SetInsertPoint(entry);
 
         varTable.enterScope();
+        this->hasReturnStmt = false;
 
         size_t idx = 0;
         for (auto& arg : func->args()) {
@@ -83,6 +84,14 @@ namespace raccoon::compiler::ast {
 
         if (node.body) {
             node.body->accept(*this);
+        }
+
+        if (!builder->GetInsertBlock()->getTerminator()) {
+            if (retType->isVoidTy()) {
+                builder->CreateRetVoid();
+            } else {
+                builder->CreateRet(llvm::Constant::getNullValue(retType));
+            }
         }
 
         varTable.exitScope();
@@ -103,13 +112,13 @@ namespace raccoon::compiler::ast {
                     llvm::FunctionType::get(builder->getInt32Ty(), {builder->getPtrTy()}, true)
             );
 
-            if (node.args.size() != 1) throw ParseError("print() expects 1 argument.");
+            if (node.args.size() != 1) throw CompileError("print() expects 1 argument.");
             node.args[0]->accept(*this);
             llvm::Value* valToPrint = this->lastValue;
 
             std::string fmt;
             if (valToPrint->getType()->isIntegerTy(32)) fmt = "%d\n";
-            else throw ParseError("Unsupported type for print()");
+            else throw CompileError("Unsupported type for print()");
 
             llvm::Value* fmtPtr = builder->CreateGlobalStringPtr(fmt, "print_fmt");
             this->lastValue = builder->CreateCall(printfFn, {fmtPtr, valToPrint});
@@ -120,7 +129,7 @@ namespace raccoon::compiler::ast {
             std::optional<VarInfo> varInfo = varTable.lookup(node.func);
             if (varInfo) {
                 if (varInfo->type->getKind() != TypeKind::FUNCTION) {
-                    throw ParseError("Attempted to call a non-function variable: " + node.func);
+                    throw CompileError("Attempted to call a non-function variable: " + node.func);
                 }
 
                 auto funcTypeAst = std::static_pointer_cast<FunctionType>(varInfo->type);
@@ -144,7 +153,7 @@ namespace raccoon::compiler::ast {
             }
 
             if (!calleeValue || !llvmFuncType) {
-                throw ParseError("Undefined function: " + node.func);
+                throw CompileError("Undefined function: " + node.func);
             }
 
             std::vector<llvm::Value *> args;
@@ -158,28 +167,30 @@ namespace raccoon::compiler::ast {
     }
 
     void IRGenerator::visit(ReturnStmt &node) {
+        if (builder->GetInsertBlock()->getTerminator()) return;
+
         if (node.expr) {
             node.expr->accept(*this);
         }
 
-        llvm::BasicBlock* currentBlock = builder->GetInsertBlock();
-        if (!currentBlock) throw ParseError("Return statement outside of a valid block.");
-
-        llvm::Function* currentFunc = currentBlock->getParent();
+        llvm::Function* currentFunc = builder->GetInsertBlock()->getParent();
         llvm::Type* retType = currentFunc->getReturnType();
 
         if (retType->isVoidTy()) {
             builder->CreateRetVoid();
         } else {
-            builder->CreateRet(this->lastValue ? this->lastValue : llvm::Constant::getNullValue(retType));
+            llvm::Value* val = (node.expr) ? this->lastValue : llvm::Constant::getNullValue(retType);
+            builder->CreateRet(val);
         }
+
+        this->hasReturnStmt = true;
     }
 
     void IRGenerator::visit(UnaryExpression& node) {
         if (node.expr) node.expr->accept(*this);
         llvm::Value* operandValue = this->lastValue;
 
-        if (!operandValue) throw ParseError("Failed to generate IR for unary operand.");
+        if (!operandValue) throw CompileError("Failed to generate IR for unary operand.");
 
         bool isFloat = operandValue->getType()->isFloatingPointTy();
 
@@ -189,7 +200,7 @@ namespace raccoon::compiler::ast {
         } else if (node.op == "!") {
             this->lastValue = builder->CreateNot(operandValue, "nottmp");
         } else {
-            throw ParseError("Unknown unary operator: " + node.op);
+            throw CompileError("Unknown unary operator: " + node.op);
         }
     }
 
@@ -200,7 +211,7 @@ namespace raccoon::compiler::ast {
         if (node.right) node.right->accept(*this);
         llvm::Value* rightValue = this->lastValue;
 
-        if (!leftValue || !rightValue) throw ParseError("Failed to generate IR for binary operands.");
+        if (!leftValue || !rightValue) throw CompileError("Failed to generate IR for binary operands.");
 
         bool isFloat = leftValue->getType()->isFloatingPointTy();
 
@@ -243,7 +254,7 @@ namespace raccoon::compiler::ast {
                 break;
 
             default:
-                throw ParseError("Unknown binary operator during IR generation");
+                throw CompileError("Unknown binary operator during IR generation");
         }
     }
 
@@ -284,7 +295,7 @@ namespace raccoon::compiler::ast {
         } else if (isGlobal) {
             std::string mangledName = currentDen.empty() ? node.name : currentDen + "_" + node.name;
             auto* constInit = llvm::dyn_cast<llvm::Constant>(initValue);
-            if (!constInit) throw ParseError("Global initializer must be a constant.");
+            if (!constInit) throw CompileError("Global initializer must be a constant.");
 
             auto* globalVar = new llvm::GlobalVariable(
                     *module, varType, !node.isMutable, llvm::GlobalValue::ExternalLinkage,
@@ -304,7 +315,7 @@ namespace raccoon::compiler::ast {
 
     void IRGenerator::visit(VariableAssign& node) {
         std::optional<VarInfo> varInfo = varTable.lookup(node.name);
-        if (!varInfo) throw ParseError("Undefined variable: " + node.name);
+        if (!varInfo) throw CompileError("Undefined variable: " + node.name);
 
         if (node.value) {
             if (varInfo->type->getKind() == TypeKind::FUNCTION) {

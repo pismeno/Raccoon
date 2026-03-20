@@ -28,6 +28,7 @@ namespace raccoon::compiler::ast {
         VarTable varTable;
         std::shared_ptr<Type> lastType = PrimitiveType::Unknown;
         std::shared_ptr<FunctionType> currentExpectedFunctionType = nullptr;
+        bool hasReturnStmt = false;
 
         static std::shared_ptr<Type> checkType(const std::string& declaredTypeStr);
     };

@@ -42,12 +42,17 @@ namespace raccoon::compiler::ast {
             varTable.define(node.paramNames[i], signature->params[i], false);
         }
 
-        auto previousExpected = this->currentExpectedFunctionType;
+        bool previousHasReturnStmt = this->hasReturnStmt;
+        std::shared_ptr<FunctionType> previousExpected = this->currentExpectedFunctionType;
 
         if (node.body) {
             node.body->accept(*this);
         }
+        if (!this->hasReturnStmt && signature->returnType != PrimitiveType::Void) {
+            throw ParseError("Function expression must return a value.");
+        }
 
+        this->hasReturnStmt = previousHasReturnStmt;
         this->currentExpectedFunctionType = previousExpected;
 
         varTable.exitScope();
@@ -188,10 +193,12 @@ namespace raccoon::compiler::ast {
 
     void SemanticAnalyzer::visit(ReturnStmt &node) {
         if (node.expr) node.expr->accept(*this);
+        else this->lastType = PrimitiveType::Void;
         if (this->currentExpectedFunctionType == nullptr) throw ParseError("Cannot return from a non-function.");
         if (!(*this->lastType == *this->currentExpectedFunctionType->returnType)) {
             throw ParseError("Type mismatch: Function return type does not match expression type.");
         }
+        this->hasReturnStmt = true;
     }
 
     void SemanticAnalyzer::visit(CallExpr &node) {

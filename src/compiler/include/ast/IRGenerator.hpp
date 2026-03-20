@@ -9,6 +9,11 @@
 
 namespace raccoon::compiler::ast {
 
+    class CompileError : public std::runtime_error {
+    public:
+        explicit CompileError(const std::string& message) : std::runtime_error(message) {}
+    };
+
     class IRGenerator: public Visitor {
     public:
         IRGenerator();
@@ -37,6 +42,7 @@ namespace raccoon::compiler::ast {
 
         std::shared_ptr<FunctionType> currentExpectedFunctionType = nullptr;
         std::string currentExpectedFuncName = "";
+        bool hasReturnStmt = false;
 
         llvm::Type* getLLVMType(std::shared_ptr<Type> type);
     };

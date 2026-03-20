@@ -196,7 +196,8 @@ namespace raccoon::compiler {
     }
 
     std::unique_ptr<Stmt> Parser::ret() {
-        std::unique_ptr<Expr> expr = expression();
+        std::unique_ptr<Expr> expr;
+        if (peek().type != TokenType::SEMICOLON) expr = expression();
         consume(TokenType::SEMICOLON, "Expected ';' after return statement.");
         return std::make_unique<ReturnStmt>(std::move(expr));
     }
