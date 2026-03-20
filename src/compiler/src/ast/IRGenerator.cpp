@@ -97,7 +97,6 @@ namespace raccoon::compiler::ast {
     }
 
     void IRGenerator::visit(CallExpr &node) {
-
         if (node.func == "print") {
             llvm::FunctionCallee printfFn = module->getOrInsertFunction(
                     "printf",
@@ -113,12 +112,40 @@ namespace raccoon::compiler::ast {
             else throw ParseError("Unsupported type for print()");
 
             llvm::Value* fmtPtr = builder->CreateGlobalStringPtr(fmt, "print_fmt");
-
             this->lastValue = builder->CreateCall(printfFn, {fmtPtr, valToPrint});
         } else {
-            llvm::Function* function = module->getFunction(node.func);
+            llvm::Value* calleeValue = nullptr;
+            llvm::FunctionType* llvmFuncType = nullptr;
 
-            if (!function) throw ParseError("Undefined function: " + node.func);
+            std::optional<VarInfo> varInfo = varTable.lookup(node.func);
+            if (varInfo) {
+                if (varInfo->type->getKind() != TypeKind::FUNCTION) {
+                    throw ParseError("Attempted to call a non-function variable: " + node.func);
+                }
+
+                auto funcTypeAst = std::static_pointer_cast<FunctionType>(varInfo->type);
+                std::vector<llvm::Type*> paramTypes;
+                for (const auto& pt : funcTypeAst->params) {
+                    paramTypes.push_back(getLLVMType(pt));
+                }
+                llvmFuncType = llvm::FunctionType::get(getLLVMType(funcTypeAst->returnType), paramTypes, false);
+
+                if (!varInfo->isMutable) {
+                    calleeValue = varInfo->address;
+                } else {
+                    calleeValue = builder->CreateLoad(builder->getPtrTy(), varInfo->address, node.func + ".load");
+                }
+            } else {
+                llvm::Function* function = module->getFunction(node.func);
+                if (function) {
+                    calleeValue = function;
+                    llvmFuncType = function->getFunctionType();
+                }
+            }
+
+            if (!calleeValue || !llvmFuncType) {
+                throw ParseError("Undefined function: " + node.func);
+            }
 
             std::vector<llvm::Value *> args;
             for (const auto& arg : node.args) {
@@ -126,9 +153,7 @@ namespace raccoon::compiler::ast {
                 args.push_back(this->lastValue);
             }
 
-            llvm::CallInst* call = builder->CreateCall(function, args);
-
-            this->lastValue = call;
+            this->lastValue = builder->CreateCall(llvmFuncType, calleeValue, args);
         }
     }
 

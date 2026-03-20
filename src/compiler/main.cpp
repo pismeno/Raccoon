@@ -52,9 +52,6 @@ int main(int argc, char** argv) {
             ast::SemanticAnalyzer semanticAnalyzer;
             ast::IRGenerator irGenerator;
 
-            root->accept(semanticAnalyzer);
-            root->accept(irGenerator);
-
             if (*print) {
                 std::cout << "--- Raccoon Tokens ---" << std::endl;
                 for (const auto& token : tokens) {
@@ -66,11 +63,17 @@ int main(int argc, char** argv) {
                 ast::Printer printer;
                 root->accept(printer);
 
+                root->accept(semanticAnalyzer);
+                std::cout << "Semantic Analysis is done." << std::endl;
+
                 std::cout << "--- Raccoon IR ---" << std::endl;
+                root->accept(irGenerator);
                 irGenerator.module->print(llvm::outs(), nullptr);
             }
 
             if (*compile || *run) {
+                root->accept(semanticAnalyzer);
+                root->accept(irGenerator);
                 std::filesystem::create_directories("build");
                 std::string irPath = "build/" + outputFileName + ".ll";
                 std::ofstream file(irPath);

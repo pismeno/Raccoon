@@ -42,11 +42,13 @@ namespace raccoon::compiler::ast {
             varTable.define(node.paramNames[i], signature->params[i], false);
         }
 
+        auto previousExpected = this->currentExpectedFunctionType;
+
         if (node.body) {
             node.body->accept(*this);
         }
 
-        this->currentExpectedFunctionType = nullptr;
+        this->currentExpectedFunctionType = previousExpected;
 
         varTable.exitScope();
 
@@ -170,6 +172,8 @@ namespace raccoon::compiler::ast {
         varTable.define(node.name, signature, node.isMutable);
 
         if (node.initializer) {
+            auto previousExpected = this->currentExpectedFunctionType;
+
             this->currentExpectedFunctionType = signature;
 
             node.initializer->accept(*this);
@@ -177,6 +181,8 @@ namespace raccoon::compiler::ast {
             if (!(*this->lastType == *signature)) {
                 throw ParseError("Type mismatch: Function body does not match declaration signature for " + node.name);
             }
+
+            this->currentExpectedFunctionType = previousExpected;
         }
     }
 
