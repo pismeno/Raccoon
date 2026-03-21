@@ -28,6 +28,7 @@ namespace raccoon::compiler::ast {
         void enterDens(const std::string name);
         void exitDens(const unsigned int numDens = 1);
         void exitDens(const std::string name);
+        bool isInDen();
 
         void define(const std::string& name, const std::shared_ptr<Type>, bool isImmutable);
         void define(const std::string& name, VarInfo info);

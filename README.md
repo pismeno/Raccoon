@@ -24,6 +24,7 @@ language: C
 
 ### Basics
 The only allowed statements outside of functions are `let` and `den`, so declaring variables, functions, classes and seting dens (namespaces).  
+`let` statements are only allowed inside `den` blocks.  
 The program runs from the `main` function. The file extension for raccoon source files is `.trash`.
 
 ### Variables & Constants

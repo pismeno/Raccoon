@@ -143,6 +143,8 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(VariableDecl &node) {
+        if (!varTable.isInDen()) throw ParseError("Declarations only allowed inside a den.");
+
         std::shared_ptr<Type> declaredType = checkType(node.type);
 
         if (node.initializer) {
@@ -167,6 +169,8 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(FunctionDecl &node) {
+        if (!varTable.isInDen()) throw ParseError("Declarations only allowed inside a den.");
+
         std::shared_ptr<Type> returnType = checkType(node.returnType);
         std::vector<std::shared_ptr<Type>> paramTypes;
         paramTypes.reserve(node.paramTypes.size());

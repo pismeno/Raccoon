@@ -68,6 +68,10 @@ namespace raccoon::compiler::ast {
         exitDens(countOccurrences(name, "::") + 1);
     }
 
+    bool VarTable::isInDen() {
+        return !activeDens.empty();
+    }
+
     void VarTable::define(const std::string& name, const std::shared_ptr<Type> type, bool isMutable) {
         std::string mangledName = isAtGlobalScope() ? getCurrentMangledPrefix() + name : name;
 

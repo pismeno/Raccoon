@@ -72,13 +72,18 @@ namespace raccoon::compiler {
 
     std::unique_ptr<Stmt> Parser::denDeclaration() {
         Token name = consume(TokenType::IDENTIFIER, "Expected den name.");
-        consume(TokenType::LBRACE, "Expected '{' for den body.");
+
         std::vector<std::unique_ptr<Stmt>> contents;
-        while (!check(TokenType::RBRACE) && !isAtEnd()) {
+        if (match(TokenType::LBRACE)) {
+            while (!check(TokenType::RBRACE) && !isAtEnd()) {
+                contents.push_back(declaration());
+            }
+            consume(TokenType::RBRACE, "Expect '}' after den body.");
+            consume(TokenType::SEMICOLON, "Expected ';' after den declaration.");
+        } else {
             contents.push_back(declaration());
         }
-        consume(TokenType::RBRACE, "Expect '}' after den body.");
-        consume(TokenType::SEMICOLON, "Expected ';' after den declaration.");
+
         return std::make_unique<DenStmt>(name.lexeme, std::move(contents));
     }
 
@@ -205,11 +210,12 @@ namespace raccoon::compiler {
 
     std::unique_ptr<Stmt> Parser::ifStatement() {
         std::unique_ptr<Expr> condition = logicalOr();
-        std::unique_ptr<Stmt> thenBranch = statement();
+        std::unique_ptr<Stmt> thenBranch = declaration();
         std::unique_ptr<Stmt> elseBranch = nullptr;
         if (match(TokenType::ELSE)) {
-            elseBranch = statement();
+            elseBranch = declaration();
         }
+        if (previous().type == TokenType::RBRACE) consume(TokenType::SEMICOLON, "Expected ';' after if statement.");
         return std::make_unique<IfStmt>(std::move(condition), std::move(thenBranch), std::move(elseBranch));
     }
 
