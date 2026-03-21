@@ -144,6 +144,7 @@ namespace raccoon::compiler::ast {
 
     void SemanticAnalyzer::visit(VariableDecl &node) {
         if (!varTable.isInDen()) throw ParseError("Declarations only allowed inside a den.");
+        if (varTable.lookup(node.name)) throw ParseError("Variable '" + node.name + "' was already defined.");
 
         std::shared_ptr<Type> declaredType = checkType(node.type);
 
@@ -170,6 +171,7 @@ namespace raccoon::compiler::ast {
 
     void SemanticAnalyzer::visit(FunctionDecl &node) {
         if (!varTable.isInDen()) throw ParseError("Declarations only allowed inside a den.");
+        if (varTable.lookup(node.name)) throw ParseError("Function '" + node.name + "' was already defined.");
 
         std::shared_ptr<Type> returnType = checkType(node.returnType);
         std::vector<std::shared_ptr<Type>> paramTypes;
