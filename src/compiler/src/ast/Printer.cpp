@@ -143,6 +143,29 @@ namespace raccoon::compiler::ast {
         }
     }
 
+    void Printer::visit(ClassDecl& node) {
+        printIndent();
+        std::cout << "[ClassDecl: name=" << node.name
+                  << ", declaredMutable=" << (node.declaredMutable ? "true" : "false")
+                  << "]" << std::endl;
+
+        if (node.initializer) {
+            indentLevel++;
+            node.initializer->accept(*this);
+            indentLevel--;
+        }
+    }
+
+    void Printer::visit(ClassExpr &node) {
+        printIndent();
+        std::cout << "[ClassExpr]" << std::endl;
+        indentLevel++;
+        for (const auto& stmt : node.statements) {
+            if (stmt) stmt->accept(*this);
+        }
+        indentLevel--;
+    }
+
     void Printer::visit(BlockStmt& node) {
         printIndent();
         std::cout << "[BlockStmt]" << std::endl;

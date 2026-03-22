@@ -59,6 +59,7 @@ namespace raccoon::compiler {
                 else if (word == "return") tokens.push_back({TokenType::RETURN, word});
                 else if (word == "and") tokens.push_back({TokenType::AND, word});
                 else if (word == "or") tokens.push_back({TokenType::OR, word});
+                else if (word == "class") tokens.push_back({TokenType::CLASS, word});
                 else tokens.push_back({TokenType::IDENTIFIER, word});
                 continue;
             }

@@ -29,6 +29,8 @@ namespace raccoon::compiler::ast {
         void visit(VariableDecl& node) override;
         void visit(VariableAssign& node) override;
         void visit(FunctionDecl& node) override;
+        void visit(ClassDecl& node) override;
+        void visit(ClassExpr& node) override;
         void visit(ReturnStmt& node) override;
         void visit(DenStmt& node) override;
         void visit(IfStmt& node) override;
@@ -44,6 +46,7 @@ namespace raccoon::compiler::ast {
         std::shared_ptr<FunctionType> currentExpectedFunctionType = nullptr;
         std::string currentExpectedFuncName = "";
         bool hasReturnStmt = false;
+        std::unordered_map<std::string, llvm::StructType*> structMap;
 
         llvm::Type* getLLVMType(std::shared_ptr<Type> type);
     };

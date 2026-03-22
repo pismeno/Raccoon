@@ -46,6 +46,14 @@ namespace raccoon::compiler::ast {
         visitor.visit(*this);
     }
 
+    void ClassDecl::accept(Visitor& visitor) {
+        visitor.visit(*this);
+    }
+
+    void ClassExpr::accept(Visitor& visitor) {
+        visitor.visit(*this);
+    }
+
     void ReturnStmt::accept(Visitor& visitor) {
         visitor.visit(*this);
     }

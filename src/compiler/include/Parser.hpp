@@ -40,7 +40,8 @@ namespace raccoon::compiler {
         std::unique_ptr<Stmt> denDeclaration();
         std::unique_ptr<Stmt> varDeclaration();
         std::unique_ptr<Stmt> varAssignment();
-        std::unique_ptr<Stmt> functionDeclaration(Token name, bool isMutable);
+        std::unique_ptr<Stmt> functionDeclaration(const Token& name, bool isMutable);
+        std::unique_ptr<Stmt> classDeclaration(const Token& name, bool isMutable);
         std::unique_ptr<BlockStmt> block();
         std::unique_ptr<Stmt> ret();
         std::unique_ptr<Stmt> ifStatement();
@@ -54,6 +55,7 @@ namespace raccoon::compiler {
         std::unique_ptr<Expr> factor();
         std::unique_ptr<Expr> unary();
         std::unique_ptr<Expr> funcExpression();
+        std::unique_ptr<Expr> classExpression();
         std::unique_ptr<Expr> finishCall(const std::string& name);
 
         bool isFuncExpression();

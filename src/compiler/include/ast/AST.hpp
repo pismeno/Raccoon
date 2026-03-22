@@ -163,6 +163,30 @@ namespace raccoon::compiler::ast {
         void accept(Visitor& visitor) override;
     };
 
+    class ClassDecl : public Stmt {
+    public:
+        bool declaredMutable;
+        std::string name;
+        std::unique_ptr<Expr> initializer;
+
+        ClassDecl(std::string name, bool declaredMutable, std::unique_ptr<Expr> initializer):
+        declaredMutable(declaredMutable),
+        name(std::move(name)),
+        initializer(std::move(initializer)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
+    class ClassExpr : public Expr {
+    public:
+        std::vector<std::unique_ptr<Stmt>> statements;
+
+        ClassExpr(std::vector<std::unique_ptr<Stmt>> statements):
+        statements(std::move(statements)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
     class ReturnStmt : public Stmt {
     public:
         std::unique_ptr<Expr> expr;

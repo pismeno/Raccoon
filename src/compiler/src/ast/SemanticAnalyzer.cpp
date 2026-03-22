@@ -60,6 +60,18 @@ namespace raccoon::compiler::ast {
         this->lastType = signature;
     }
 
+    void SemanticAnalyzer::visit(ClassExpr &node) {
+        if (!currentClassValue) {
+            throw ParseError("Class expression must be assigned to a named variable.");
+        }
+
+        for (const auto& member : node.statements) {
+            if (member) member->accept(*this);
+        }
+
+        this->lastType = PrimitiveType::Class;
+    }
+
     void SemanticAnalyzer::visit(UnaryExpression &node) {
         if (node.expr) node.expr->accept(*this);
         std::shared_ptr<Type> rightType = this->lastType;
@@ -143,22 +155,37 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(VariableDecl &node) {
-        if (!varTable.isInDen()) throw ParseError("Declarations only allowed inside a den.");
-        if (varTable.lookup(node.name)) throw ParseError("Variable '" + node.name + "' was already defined.");
-
         std::shared_ptr<Type> declaredType = checkType(node.type);
 
-        if (node.initializer) {
-            node.initializer->accept(*this);
+        if (currentClassValue) {
+            if (currentClassValue->members.count(node.name)) {
+                throw ParseError("Member '" + node.name + "' already defined in class " + currentClassValue->name);
+            }
 
-            if (!(*this->lastType == *declaredType)) {
-                throw ParseError("Type mismatch: Cannot assign " + typeToString(lastType.get()) + " to " + node.type);
+            size_t fieldIndex = currentClassValue->members.size();
+            currentClassValue->members[node.name] = { declaredType, fieldIndex };
+
+            if (node.initializer) {
+                node.initializer->accept(*this);
+                if (!(*this->lastType == *declaredType)) {
+                    throw ParseError("Type mismatch in field '" + node.name + "' initializer.");
+                }
             }
         } else {
-            throw ParseError("Variable '" + node.name + "' declaration requires an initializer.");
-        }
+            if (!varTable.isInDen()) throw ParseError("Declarations only allowed inside a den.");
+            if (varTable.lookup(node.name)) throw ParseError("Variable '" + node.name + "' was already defined.");
 
-        varTable.define(node.name, declaredType, node.isMutable);
+            if (node.initializer) {
+                node.initializer->accept(*this);
+                if (!(*this->lastType == *declaredType)) {
+                    throw ParseError("Type mismatch: Cannot assign " + typeToString(lastType.get()) + " to " + node.type);
+                }
+            } else {
+                throw ParseError("Variable '" + node.name + "' requires an initializer.");
+            }
+
+            varTable.define(node.name, declaredType, node.isMutable);
+        }
     }
 
     void SemanticAnalyzer::visit(VariableAssign &node) {
@@ -170,33 +197,60 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(FunctionDecl &node) {
-        if (!varTable.isInDen()) throw ParseError("Declarations only allowed inside a den.");
-        if (varTable.lookup(node.name)) throw ParseError("Function '" + node.name + "' was already defined.");
-
         std::shared_ptr<Type> returnType = checkType(node.returnType);
         std::vector<std::shared_ptr<Type>> paramTypes;
         paramTypes.reserve(node.paramTypes.size());
         for (const auto& paramType : node.paramTypes) {
             paramTypes.push_back(checkType(paramType));
         }
-
         std::shared_ptr<FunctionType> signature = FunctionType::make(returnType, paramTypes);
 
-        varTable.define(node.name, signature, node.isMutable);
-
-        if (node.initializer) {
-            auto previousExpected = this->currentExpectedFunctionType;
-
-            this->currentExpectedFunctionType = signature;
-
-            node.initializer->accept(*this);
-
-            if (!(*this->lastType == *signature)) {
-                throw ParseError("Type mismatch: Function body does not match declaration signature for " + node.name);
+        if (currentClassValue) {
+            if (currentClassValue->members.count(node.name)) {
+                throw ParseError("Method '" + node.name + "' already defined in class " + currentClassValue->name);
             }
 
-            this->currentExpectedFunctionType = previousExpected;
+            size_t methodIndex = currentClassValue->members.size();
+            currentClassValue->members[node.name] = { signature, methodIndex };
+
+            if (node.initializer) {
+                auto previousExpected = this->currentExpectedFunctionType;
+                this->currentExpectedFunctionType = signature;
+
+                node.initializer->accept(*this);
+
+                this->currentExpectedFunctionType = previousExpected;
+            }
+        } else {
+            if (!varTable.isInDen()) throw ParseError("Declarations only allowed inside a den.");
+            if (varTable.lookup(node.name)) throw ParseError("Function '" + node.name + "' was already defined.");
+
+            varTable.define(node.name, signature, node.isMutable);
+
+            if (node.initializer) {
+                auto previousExpected = this->currentExpectedFunctionType;
+                this->currentExpectedFunctionType = signature;
+                node.initializer->accept(*this);
+                this->currentExpectedFunctionType = previousExpected;
+            }
         }
+    }
+
+    void SemanticAnalyzer::visit(ClassDecl &node) {
+        if (varTable.lookup(node.name)) throw ParseError("Name '" + node.name + "' already taken.");
+
+        varTable.define(node.name, PrimitiveType::Class, false);
+
+        classRegistry[node.name] = { node.name, {} };
+
+        auto* previousClass = this->currentClassValue;
+        this->currentClassValue = &classRegistry[node.name];
+
+        if (node.initializer) {
+            node.initializer->accept(*this);
+        }
+
+        this->currentClassValue = previousClass;
     }
 
     void SemanticAnalyzer::visit(ReturnStmt &node) {

@@ -428,6 +428,7 @@ namespace raccoon::compiler::ast {
         parentFunc->insert(parentFunc->end(), mergeBlock);
         builder->SetInsertPoint(mergeBlock);
     }
+
     llvm::Type* IRGenerator::getLLVMType(std::shared_ptr<Type> type) {
         if (!type) return builder->getVoidTy();
 

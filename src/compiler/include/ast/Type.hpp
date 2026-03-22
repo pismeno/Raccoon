@@ -8,7 +8,7 @@
 namespace raccoon::compiler::ast {
 
     enum TypeKind {
-        UNKNOWN, INT, FLOAT, BOOL, VOID, FUNCTION
+        UNKNOWN, INT, FLOAT, BOOL, VOID, FUNCTION, CLASS
     };
 
     class Type {
@@ -38,6 +38,7 @@ namespace raccoon::compiler::ast {
         static const std::shared_ptr<PrimitiveType> Float;
         static const std::shared_ptr<PrimitiveType> Bool;
         static const std::shared_ptr<PrimitiveType> Void;
+        static const std::shared_ptr<PrimitiveType> Class;
 
     protected:
         bool equals(const Type& other) const override { return true; }
@@ -63,6 +64,22 @@ namespace raccoon::compiler::ast {
         bool equals(const Type& other) const override;
     };
 
+    /*
+    class ObjectType : public Type {
+    public:
+        std::string classVariableName;
+
+        ObjectType(std::string varName)
+                : Type(TypeKind::OBJECT), classVariableName(std::move(varName)) {}
+
+    protected:
+        bool equals(const Type& other) const override {
+            if (other.getKind() != TypeKind::OBJECT) return false;
+            auto otherObj = static_cast<const ObjectType*>(&other);
+            return classVariableName == otherObj->classVariableName;
+        }
+    };
+     */
 
     inline std::string typeToString(Type* type) {
         switch (type->getKind()) {

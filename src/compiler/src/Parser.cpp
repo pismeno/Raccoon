@@ -100,6 +100,10 @@ namespace raccoon::compiler {
             return functionDeclaration(name, isMutable);
         }
 
+        if (check(TokenType::CLASS)) {
+            return classDeclaration(name, isMutable);
+        }
+
         Token type = consume(TokenType::IDENTIFIER, "Expected variable type.");
 
         std::unique_ptr<Expr> initializer = nullptr;
@@ -119,7 +123,7 @@ namespace raccoon::compiler {
         return std::make_unique<VariableAssign>(name.lexeme, std::move(value));
     }
 
-    std::unique_ptr<Stmt> Parser::functionDeclaration(const Token name, bool isMutable) {
+    std::unique_ptr<Stmt> Parser::functionDeclaration(const Token& name, bool isMutable) {
         consume(TokenType::LPAREN, "Expected '(' for function type parameters.");
         std::vector<std::string> paramTypes;
         if (!check(TokenType::RPAREN)) {
@@ -140,6 +144,18 @@ namespace raccoon::compiler {
         return std::make_unique<FunctionDecl>(name.lexeme, isMutable, paramTypes, returnType.lexeme, std::move(initializer));
     }
 
+    std::unique_ptr<Stmt> Parser::classDeclaration(const Token& name, bool isMutable) {
+        consume(TokenType::CLASS, "Expected keyword 'class' when declaring a class.");
+
+        std::unique_ptr<Expr> initializer = nullptr;
+        if (match(TokenType::ASSIGN)) {
+            initializer = expression();
+        }
+
+        consume(TokenType::SEMICOLON, "Expected ';' after class declaration.");
+        return std::make_unique<ClassDecl>(name.lexeme, isMutable, std::move(initializer));
+    }
+
     std::unique_ptr<BlockStmt> Parser::block() {
         std::vector<std::unique_ptr<Stmt>> statements;
         while (!check(TokenType::RBRACE) && !isAtEnd()) {
@@ -152,6 +168,8 @@ namespace raccoon::compiler {
     std::unique_ptr<Expr> Parser::expression() {
         if (isFuncExpression()) {
             return funcExpression();
+        } else if (match(TokenType::CLASS)) {
+            return classExpression();
         }
         return logicalOr();
     }
@@ -188,6 +206,16 @@ namespace raccoon::compiler {
         if ((current + i) >= tokens.size()) return false;
 
         return peek(i).type == TokenType::LBRACE;
+    }
+
+    std::unique_ptr<Expr> Parser::classExpression() {
+        consume(TokenType::LBRACE, "Expected '{' before class body.");
+        std::vector<std::unique_ptr<Stmt>> statements;
+        while (!check(TokenType::RBRACE) && !isAtEnd()) {
+            statements.push_back(declaration());
+        }
+        consume(TokenType::RBRACE, "Expect '}' after class body.");
+        return std::make_unique<ClassExpr>(std::move(statements));
     }
 
     std::unique_ptr<Expr> Parser::finishCall(const std::string& name) {
