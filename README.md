@@ -71,7 +71,7 @@ example of function:
 ```raccoon
 let add be (int, int) int = (a, b) {
     return a + b;
-}
+};
 ```
 functions can also be declared as mutable using the `mut` keyword.
 
@@ -82,7 +82,7 @@ if age > 19 {
     print(1);
 } else {
     print(0);
-}
+};
 ```
 
 ### Dens (Namespaces)
@@ -90,4 +90,4 @@ if age > 19 {
 ```raccoon
 den math::geometry {
     let PI be float = 3.14;
-}
+};
