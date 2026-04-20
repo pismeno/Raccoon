@@ -8,8 +8,6 @@ namespace raccoon::compiler::ast {
         context = std::make_unique<llvm::LLVMContext>();
         module = std::make_unique<llvm::Module>("RaccoonModule", *context);
         builder = std::make_unique<llvm::IRBuilder<>>(*context);
-
-
     }
 
     void IRGenerator::visit(ExprStmt &node) {
@@ -430,11 +428,57 @@ namespace raccoon::compiler::ast {
     }
 
     void IRGenerator::visit(ClassDecl& node) {
+        std::string className = node.name;
+        llvm::StructType* structType = llvm::StructType::create(*context, className);
 
+        structMap[className] = structType;
+
+        if (node.initializer) {
+            this->currentStructName = className;
+            this->currentStructFields.clear();
+
+            node.initializer->accept(*this);
+
+            structType->setBody(this->currentStructFields);
+
+            this->currentStructName.clear();
+            this->currentStructFields.clear();
+        }
+
+        llvm::Constant* constInit = llvm::Constant::getNullValue(structType);
+        std::string instName = className + "_instance";
+        auto* instanceGV = new llvm::GlobalVariable(
+                *module, structType, false, llvm::GlobalValue::ExternalLinkage, constInit, instName
+        );
+
+        llvm::PointerType* ptrToStruct = structType->getPointerTo();
+        llvm::Constant* instanceAsPtr = llvm::ConstantExpr::getBitCast(instanceGV, ptrToStruct);
+        std::string ptrName = className + "_ptr";
+        auto* pointerGV = new llvm::GlobalVariable(
+                *module, ptrToStruct, false, llvm::GlobalValue::ExternalLinkage, instanceAsPtr, ptrName
+        );
+
+        VarInfo classInfo{className, PrimitiveType::Class, false, true, pointerGV};
+        varTable.define(className, classInfo);
     }
 
     void IRGenerator::visit(ClassExpr& node) {
+        if (this->currentStructName.empty()) {
+            throw CompileError("Class expression must be visited as part of a class declaration.");
+        }
 
+        for (const auto& stmt : node.statements) {
+            if (!stmt) continue;
+
+            if (auto varDecl = dynamic_cast<VariableDecl*>(stmt.get())) {
+                 std::shared_ptr<Type> fieldType = stringToType(varDecl->type);
+                 llvm::Type* llvmFieldType = getLLVMType(fieldType);
+                 this->currentStructFields.push_back(llvmFieldType);
+            }
+        }
+
+        auto it = structMap.find(this->currentStructName);
+        if (it != structMap.end()) this->lastValue = nullptr;
     }
 
     llvm::Type* IRGenerator::getLLVMType(std::shared_ptr<Type> type) {

@@ -48,6 +48,9 @@ namespace raccoon::compiler::ast {
         bool hasReturnStmt = false;
         std::unordered_map<std::string, llvm::StructType*> structMap;
 
+        std::string currentStructName = "";
+        std::vector<llvm::Type*> currentStructFields;
+
         llvm::Type* getLLVMType(std::shared_ptr<Type> type);
     };
 
