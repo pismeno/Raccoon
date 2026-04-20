@@ -429,6 +429,14 @@ namespace raccoon::compiler::ast {
         builder->SetInsertPoint(mergeBlock);
     }
 
+    void IRGenerator::visit(ClassDecl& node) {
+
+    }
+
+    void IRGenerator::visit(ClassExpr& node) {
+
+    }
+
     llvm::Type* IRGenerator::getLLVMType(std::shared_ptr<Type> type) {
         if (!type) return builder->getVoidTy();
 

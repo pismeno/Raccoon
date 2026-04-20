@@ -88,6 +88,7 @@ namespace raccoon::compiler::ast {
             case TypeKind::BOOL: return "boolean";
             case TypeKind::VOID: return "void";
             case TypeKind::FUNCTION: return "function";
+            case TypeKind::CLASS: return "class";
             default: return "unknown";
         }
     }
@@ -100,7 +101,8 @@ namespace raccoon::compiler::ast {
                 {"float", TypeKind::FLOAT},
                 {"boolean", TypeKind::BOOL},
                 {"void", TypeKind::VOID},
-                {"function", TypeKind::FUNCTION}
+                {"function", TypeKind::FUNCTION},
+                {"class", TypeKind::CLASS},
         };
 
         auto it = typeMap.find(typeStr);
@@ -118,6 +120,7 @@ namespace raccoon::compiler::ast {
                 {"float", PrimitiveType::Float},
                 {"boolean", PrimitiveType::Bool},
                 {"void", PrimitiveType::Void},
+                {"class", PrimitiveType::Class},
         };
 
         auto it = typeMap.find(typeStr);

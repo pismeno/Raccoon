@@ -7,6 +7,7 @@ namespace raccoon::compiler::ast {
     const std::shared_ptr<PrimitiveType> PrimitiveType::Float = std::make_shared<PrimitiveType>(FLOAT);
     const std::shared_ptr<PrimitiveType> PrimitiveType::Bool = std::make_shared<PrimitiveType>(BOOL);
     const std::shared_ptr<PrimitiveType> PrimitiveType::Void = std::make_shared<PrimitiveType>(VOID);
+    const std::shared_ptr<PrimitiveType> PrimitiveType::Class = std::make_shared<PrimitiveType>(CLASS);
 
     bool FunctionType::equals(const Type& other) const {
         const auto& otherFn = static_cast<const FunctionType&>(other);

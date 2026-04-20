@@ -62,7 +62,7 @@ namespace raccoon::compiler::ast {
 
     void SemanticAnalyzer::visit(ClassExpr &node) {
         if (!currentClassValue) {
-            throw ParseError("Class expression must be assigned to a named variable.");
+            throw ParseError("Class expression must be assigned to a variable.");
         }
 
         for (const auto& member : node.statements) {
@@ -145,6 +145,13 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(BlockStmt &node) {
+        bool insideClassExpr = currentClassValue != nullptr;
+        bool insideFunctionExpr = currentExpectedFunctionType != nullptr;
+
+        if (insideClassExpr && !insideFunctionExpr) {
+            throw ParseError("Blocks are not allowed inside class expressions, outside of function expressions.");
+        }
+
         varTable.enterScope();
 
         for (const auto& stmt : node.statements) {
@@ -237,6 +244,8 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(ClassDecl &node) {
+        if (node.declaredMutable) throw ParseError("Cannot declare a class as mutable.");
+
         if (varTable.lookup(node.name)) throw ParseError("Name '" + node.name + "' already taken.");
 
         varTable.define(node.name, PrimitiveType::Class, false);
