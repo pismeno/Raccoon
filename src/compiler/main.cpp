@@ -1,15 +1,22 @@
+#include <fstream>
 #include <iostream>
 #include <memory>
+
+#include <llvm/Support/raw_os_ostream.h>
+#include <llvm/Linker/Linker.h>
+#include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Bitcode/BitcodeReader.h>
+#include "include/CLI11.hpp"
+
+#include "RuntimeBitcode.hpp"
+
 #include "include/Lexer.hpp"
 #include "include/Parser.hpp"
 #include "include/ast/Printer.hpp"
 #include "include/ast/SemanticAnalyzer.hpp"
 #include "include/ast/IRGenerator.hpp"
-#include <fstream>
-#include <llvm/Support/raw_os_ostream.h>
-#include "include/CLI11.hpp"
 
-std::string get_file_contents(const std::string& sourceFileName) {
+std::string getFileContents(const std::string& sourceFileName) {
     std::ifstream file(sourceFileName);
 
     if (!file.is_open()) {
@@ -18,6 +25,29 @@ std::string get_file_contents(const std::string& sourceFileName) {
 
     return std::string((std::istreambuf_iterator<char>(file)),
                        std::istreambuf_iterator<char>());
+}
+
+bool embedRaccoonRuntime(llvm::Module& userModule, llvm::LLVMContext& context) {
+
+  llvm::StringRef bitcodeData(reinterpret_cast<const char*>(runtime_bc), runtime_bc_len);
+
+  std::unique_ptr<llvm::MemoryBuffer> buffer =
+      llvm::MemoryBuffer::getMemBuffer(bitcodeData, "runtime.bc", false);
+
+  auto runtimeModuleOrErr = llvm::parseBitcodeFile(buffer->getMemBufferRef(), context);
+  if (!runtimeModuleOrErr) {
+    std::cerr << "Raccoon Linker Error: Failed to parse embedded runtime bitcode." << std::endl;
+    return false;
+  }
+
+  std::unique_ptr<llvm::Module> runtimeModule = std::move(runtimeModuleOrErr.get());
+
+  if (llvm::Linker::linkModules(userModule, std::move(runtimeModule))) {
+    std::cerr << "Raccoon Linker Error: Critical failure merging runtime libraries." << std::endl;
+    return false;
+  }
+
+  return true;
 }
 
 int main(int argc, char** argv) {
@@ -41,7 +71,7 @@ int main(int argc, char** argv) {
     CLI11_PARSE(raccoonCli, argc, argv);
 
     if (*print || *compile|| *run) {
-        Lexer lexer(get_file_contents(sourceFileName + ".trash"));
+        Lexer lexer(getFileContents(sourceFileName + ".trash"));
         auto tokens = lexer.tokenize();
 
         Parser parser(tokens);
@@ -74,6 +104,12 @@ int main(int argc, char** argv) {
             if (*compile || *run) {
                 root->accept(semanticAnalyzer);
                 root->accept(irGenerator);
+
+                std::cout << "Embedding Raccoon core runtime..." << std::endl;
+                if (!embedRaccoonRuntime(*irGenerator.module, *irGenerator.context)) {
+                    return 1;
+                }
+
                 std::filesystem::create_directories("build");
                 std::string irPath = "build/" + outputFileName + ".ll";
                 std::ofstream file(irPath);
@@ -89,7 +125,7 @@ int main(int argc, char** argv) {
                 file.close();
 
                 if (*compile) {
-                    std::cout << "Successfully generated " << irPath << std::endl;
+                    std::cout << "Successfully generated self-contained IR at " << irPath << std::endl;
                 }
 
                 if (*run) {
@@ -97,14 +133,14 @@ int main(int argc, char** argv) {
                     std::string command = "clang " + irPath + " -o " + exePath;
 
                     if (std::system(command.c_str()) == 0) {
-                        std::cout << "--- Running selected file ---" << std::endl;
-                        std::system(exePath.c_str());
+                      std::cout << "--- Running selected file ---" << std::endl;
+                      std::system(exePath.c_str());
                     } else {
-                        std::cerr << "Error: Linker failed." << std::endl;
-                        return 1;
+                      std::cerr << "Error: Compiler / Linker failed." << std::endl;
+                      return 1;
                     }
                 }
-            }
+          }
         } catch (const ParseError& e) {
             std::cerr << e.what() << std::endl;
         }
