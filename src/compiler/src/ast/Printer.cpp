@@ -88,10 +88,22 @@ namespace raccoon::compiler::ast {
 
     void Printer::visit(VariableAssign& node) {
         printIndent();
-        std::cout << "[VariableAssign: name=" << node.name << "]" << std::endl;
+        std::cout << "VariableAssign(" << node.name << " =\n";
         indentLevel++;
         node.value->accept(*this);
         indentLevel--;
+        printIndent();
+        std::cout << ")\n";
+    }
+
+    void Printer::visit(MemberAssign& node) {
+        printIndent();
+        std::cout << "MemberAssign(" << node.object << "." << node.member << " =\n";
+        indentLevel++;
+        node.value->accept(*this);
+        indentLevel--;
+        printIndent();
+        std::cout << ")\n";
     }
 
     void Printer::visit(UnaryExpression& node) {

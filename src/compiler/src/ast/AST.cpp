@@ -46,6 +46,10 @@ namespace raccoon::compiler::ast {
         visitor.visit(*this);
     }
 
+    void MemberAssign::accept(Visitor& visitor) {
+        visitor.visit(*this);
+    }
+
     void FunctionDecl::accept(Visitor &visitor) {
         visitor.visit(*this);
     }

@@ -28,6 +28,7 @@ namespace raccoon::compiler::ast {
         void visit(BlockStmt& node) override;
         void visit(VariableDecl& node) override;
         void visit(VariableAssign& node) override;
+        void visit(MemberAssign& node) override;
         void visit(FunctionDecl& node) override;
         void visit(ClassDecl& node) override;
         void visit(ClassExpr& node) override;

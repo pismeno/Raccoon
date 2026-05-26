@@ -312,21 +312,43 @@ namespace raccoon::compiler::ast {
     }
 
     void IRGenerator::visit(VariableAssign& node) {
+        if (node.value) node.value->accept(*this);
+        llvm::Value* value = this->lastValue;
+
         std::optional<VarInfo> varInfo = varTable.lookup(node.name);
-        if (!varInfo) throw CompileError("Undefined variable: " + node.name);
+        if (!varInfo) throw CompileError("Cannot assign to undefined variable: " + node.name);
 
-        if (node.value) {
-            if (varInfo->type->getKind() == TypeKind::FUNCTION) {
-                this->currentExpectedFunctionType = std::dynamic_pointer_cast<FunctionType>(varInfo->type);
-                this->currentExpectedFuncName = "";
-            }
+        builder->CreateStore(value, varInfo->address);
+    }
 
-            node.value->accept(*this);
-            this->currentExpectedFunctionType = nullptr;
-            this->currentExpectedFuncName = "";
+    void IRGenerator::visit(MemberAssign &node) {
+        if (node.value) node.value->accept(*this);
+        llvm::Value* value = this->lastValue;
+
+        std::optional<VarInfo> objInfo = varTable.lookup(node.object);
+        if (!objInfo) throw CompileError("Undefined object: " + node.object);
+
+        auto objectType = std::static_pointer_cast<ObjectType>(objInfo->type);
+
+        auto it = classFieldOffsets.find(objectType->classVariableName);
+        if (it == classFieldOffsets.end()) {
+            throw CompileError("Class not found: " + objectType->classVariableName);
         }
 
-        builder->CreateStore(this->lastValue, varInfo->address);
+        auto fieldIt = it->second.find(node.member);
+        if (fieldIt == it->second.end()) {
+            throw CompileError("Member '" + node.member + "' not found in object '" + node.object + "'.");
+        }
+
+        unsigned fieldIndex = fieldIt->second;
+        // The object itself is likely stored as a pointer, so we load that pointer first
+        llvm::Value* objPtr = builder->CreateLoad(builder->getPtrTy(), objInfo->address, node.object);
+
+        llvm::Value* memberPtr = builder->CreateGEP(
+            builder->getInt8Ty(), objPtr, {builder->getInt32(fieldIndex * 8)}, node.member + "_ptr"
+        );
+
+        builder->CreateStore(value, builder->CreateBitCast(memberPtr, builder->getPtrTy()));
     }
 
     void IRGenerator::visit(FunctionDecl &node) {
@@ -581,3 +603,4 @@ namespace raccoon::compiler::ast {
         }
     }
 } // namespace raccoon::compiler::ast
+

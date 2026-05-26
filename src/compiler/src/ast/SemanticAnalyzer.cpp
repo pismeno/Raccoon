@@ -170,7 +170,7 @@ namespace raccoon::compiler::ast {
             }
 
             size_t fieldIndex = currentClassValue->members.size();
-            currentClassValue->members[node.name] = { declaredType, fieldIndex };
+            currentClassValue->members[node.name] = { declaredType, fieldIndex, node.isMutable };
 
             if (node.initializer) {
                 node.initializer->accept(*this);
@@ -196,11 +196,46 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(VariableAssign &node) {
+        if (node.value) node.value->accept(*this);
         std::optional<VarInfo> varInfo = varTable.lookup(node.name);
         if (!varInfo) throw ParseError("Cannot assign to undefined variable: " + node.name);
         if (currentExpectedFunctionType == nullptr) throw ParseError("Cannot assign to " + node.name + " outside functions.");
         if (!varInfo->isMutable) throw ParseError("Cannot assign to immutable: " + node.name);
         this->lastType = varInfo->type;
+    }
+
+    void SemanticAnalyzer::visit(MemberAssign &node) {
+        if (node.value) node.value->accept(*this);
+        std::shared_ptr<Type> rhsType = this->lastType;
+
+        std::optional<VarInfo> objInfo = varTable.lookup(node.object);
+        if (!objInfo) throw ParseError("Undefined object: " + node.object);
+        if (currentExpectedFunctionType == nullptr) throw ParseError("Cannot assign to member of " + node.object + " outside functions.");
+
+        if (objInfo->type->getKind() != TypeKind::OBJECT) {
+            throw ParseError("Object '" + node.object + "' is not a class instance.");
+        }
+
+        auto objType = std::static_pointer_cast<ObjectType>(objInfo->type);
+        auto classIt = classRegistry.find(objType->classVariableName);
+        if (classIt == classRegistry.end()) {
+            throw ParseError("Object refers to undefined class: " + objType->classVariableName);
+        }
+
+        auto memberIt = classIt->second.members.find(node.member);
+        if (memberIt == classIt->second.members.end()) {
+            throw ParseError("Member '" + node.member + "' not found in class '" + objType->classVariableName + "'.");
+        }
+
+        if (!memberIt->second.isMutable) {
+            throw ParseError("Cannot assign to immutable member: " + node.member);
+        }
+
+        if (!(*rhsType == *memberIt->second.type)) {
+            throw ParseError("Type mismatch in assignment to member '" + node.member + "'.");
+        }
+
+        this->lastType = memberIt->second.type;
     }
 
     void SemanticAnalyzer::visit(FunctionDecl &node) {
@@ -218,7 +253,7 @@ namespace raccoon::compiler::ast {
             }
 
             size_t methodIndex = currentClassValue->members.size();
-            currentClassValue->members[node.name] = { signature, methodIndex };
+            currentClassValue->members[node.name] = { signature, methodIndex, node.isMutable };
 
             if (node.initializer) {
                 auto previousExpected = this->currentExpectedFunctionType;

@@ -12,6 +12,7 @@ namespace raccoon::compiler::ast {
     class BlockStmt;
     class VariableDecl;
     class VariableAssign;
+    class MemberAssign;
     class FunctionDecl;
     class ClassDecl;
     class ClassExpr;
@@ -33,6 +34,7 @@ namespace raccoon::compiler::ast {
         virtual void visit(BlockStmt& node) = 0;
         virtual void visit(VariableDecl& node) = 0;
         virtual void visit(VariableAssign& node) = 0;
+        virtual void visit(MemberAssign& stmt) = 0;
         virtual void visit(FunctionDecl& node) = 0;
         virtual void visit(ClassDecl& node) = 0;
         virtual void visit(ClassExpr& node) = 0;

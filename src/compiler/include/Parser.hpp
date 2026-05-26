@@ -40,6 +40,7 @@ namespace raccoon::compiler {
         std::unique_ptr<Stmt> denDeclaration();
         std::unique_ptr<Stmt> varDeclaration();
         std::unique_ptr<Stmt> varAssignment();
+        std::unique_ptr<Stmt> memberAssignment();
         std::unique_ptr<Stmt> functionDeclaration(const Token& name, bool isMutable);
         std::unique_ptr<Stmt> classDeclaration(const Token& name, bool isMutable);
         std::unique_ptr<Stmt> objectDeclaration(const Token& name, bool isMutable);

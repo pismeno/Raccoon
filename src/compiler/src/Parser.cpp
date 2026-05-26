@@ -58,6 +58,9 @@ namespace raccoon::compiler {
             if (next().type == TokenType::ASSIGN) {
                 return varAssignment();
             }
+            if (next().type == TokenType::DOT && peek(2).type == TokenType::IDENTIFIER && peek(3).type == TokenType::ASSIGN) {
+                return memberAssignment();
+            }
             return expressionStatement();
         }
 
@@ -125,6 +128,16 @@ namespace raccoon::compiler {
         std::unique_ptr<Expr> value = expression();
         consume(TokenType::SEMICOLON, "Expected ';' after variable assignment.");
         return std::make_unique<VariableAssign>(name.lexeme, std::move(value));
+    }
+
+    std::unique_ptr<Stmt> Parser::memberAssignment() {
+        Token object = consume(TokenType::IDENTIFIER, "Expected object name.");
+        consume(TokenType::DOT, "Expected '.' after object name.");
+        Token member = consume(TokenType::IDENTIFIER, "Expected member name.");
+        consume(TokenType::ASSIGN, "Expected '=' after member name.");
+        std::unique_ptr<Expr> value = expression();
+        consume(TokenType::SEMICOLON, "Expected ';' after member assignment.");
+        return std::make_unique<MemberAssign>(object.lexeme, member.lexeme, std::move(value));
     }
 
     std::unique_ptr<Stmt> Parser::functionDeclaration(const Token& name, bool isMutable) {
