@@ -8,7 +8,7 @@
 namespace raccoon::compiler::ast {
 
     enum TypeKind {
-        UNKNOWN, INT, FLOAT, BOOL, VOID, FUNCTION, CLASS
+        UNKNOWN, INT, FLOAT, BOOL, VOID, FUNCTION, CLASS, OBJECT
     };
 
     class Type {
@@ -23,10 +23,10 @@ namespace raccoon::compiler::ast {
 
         bool operator!=(const Type& other) const { return !(*this == other); }
 
-        TypeKind getKind() const { return kind; }
+        [[nodiscard]] TypeKind getKind() const { return kind; }
     protected:
         TypeKind kind;
-        virtual bool equals(const Type& other) const = 0;
+        [[nodiscard]] virtual bool equals(const Type& other) const = 0;
     };
 
     class PrimitiveType : public Type {
@@ -41,7 +41,7 @@ namespace raccoon::compiler::ast {
         static const std::shared_ptr<PrimitiveType> Class;
 
     protected:
-        bool equals(const Type& other) const override { return true; }
+        [[nodiscard]] bool equals(const Type& other) const override { return true; }
     };
 
     class FunctionType : public Type {
@@ -55,16 +55,15 @@ namespace raccoon::compiler::ast {
                 returnType(std::move(returnType)),
                 params(std::move(paramTypes)) {}
 
-        static std::shared_ptr<FunctionType> make(std::shared_ptr<Type> ret,
-                                                  std::vector<std::shared_ptr<Type>> params) {
+        static std::shared_ptr<FunctionType> make(const std::shared_ptr<Type>& ret,
+                                                  const std::vector<std::shared_ptr<Type>>& params) {
             return std::make_shared<FunctionType>(ret, params);
         }
 
     protected:
-        bool equals(const Type& other) const override;
+        [[nodiscard]] bool equals(const Type& other) const override;
     };
 
-    /*
     class ObjectType : public Type {
     public:
         std::string classVariableName;
@@ -73,13 +72,12 @@ namespace raccoon::compiler::ast {
                 : Type(TypeKind::OBJECT), classVariableName(std::move(varName)) {}
 
     protected:
-        bool equals(const Type& other) const override {
+        [[nodiscard]] bool equals(const Type& other) const override {
             if (other.getKind() != TypeKind::OBJECT) return false;
-            auto otherObj = static_cast<const ObjectType*>(&other);
+            auto otherObj = dynamic_cast<const ObjectType*>(&other);
             return classVariableName == otherObj->classVariableName;
         }
     };
-     */
 
     inline std::string typeToString(Type* type) {
         switch (type->getKind()) {
@@ -127,6 +125,7 @@ namespace raccoon::compiler::ast {
         if (it != typeMap.end()) {
             return it->second;
         }
+
         return nullptr;
     }
 } // namespace raccoon::compiler::ast

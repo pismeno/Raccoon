@@ -104,6 +104,10 @@ namespace raccoon::compiler {
             return classDeclaration(name, isMutable);
         }
 
+        if (check(TokenType::OBJECT)) {
+            return objectDeclaration(name, isMutable);
+        }
+
         Token type = consume(TokenType::IDENTIFIER, "Expected variable type.");
 
         std::unique_ptr<Expr> initializer = nullptr;
@@ -154,6 +158,19 @@ namespace raccoon::compiler {
 
         consume(TokenType::SEMICOLON, "Expected ';' after class declaration.");
         return std::make_unique<ClassDecl>(name.lexeme, isMutable, std::move(initializer));
+    }
+
+    std::unique_ptr<Stmt> Parser::objectDeclaration(const Token& name, bool isMutable) {
+        consume(TokenType::OBJECT, "Expected keyword 'object' when declaring an object.");
+        Token objectClass = consume(TokenType::IDENTIFIER, "Expected object class name.");
+
+        std::unique_ptr<Expr> initializer = nullptr;
+        if (match(TokenType::ASSIGN)) {
+            initializer = expression();
+        }
+
+        consume(TokenType::SEMICOLON, "Expected ';' after object declaration.");
+        return std::make_unique<ObjectDecl>(name.lexeme, isMutable, objectClass.lexeme, std::move(initializer));
     }
 
     std::unique_ptr<BlockStmt> Parser::block() {
@@ -317,6 +334,11 @@ namespace raccoon::compiler {
             std::string name = previous().lexeme;
             if (match(TokenType::LPAREN)) {
                 return finishCall(name);
+            }
+            if (match(TokenType::DOT)) {
+                std::string object = name;
+                std::string member = consume(TokenType::IDENTIFIER, "Expected property name after '.'.").lexeme;
+                return std::make_unique<MemberExpr>(object, member);
             }
             return std::make_unique<VariableExpr>(name);
         }

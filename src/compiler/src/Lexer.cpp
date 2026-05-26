@@ -41,6 +41,7 @@ namespace raccoon::compiler {
             if (c == '}') { tokens.push_back({TokenType::RBRACE, "}"}); cursor++; continue; }
             if (c == ';') { tokens.push_back({TokenType::SEMICOLON, ";"}); cursor++; continue; }
             if (c == ',') { tokens.push_back({TokenType::COMMA, ","}); cursor++; continue; }
+            if (c == '.') { tokens.push_back({TokenType::DOT, "."}); cursor++; continue; }
 
             if (isalpha(c)) {
                 std::string word = "";
@@ -60,6 +61,7 @@ namespace raccoon::compiler {
                 else if (word == "and") tokens.push_back({TokenType::AND, word});
                 else if (word == "or") tokens.push_back({TokenType::OR, word});
                 else if (word == "class") tokens.push_back({TokenType::CLASS, word});
+                else if (word == "obj") tokens.push_back({TokenType::OBJECT, word});
                 else tokens.push_back({TokenType::IDENTIFIER, word});
                 continue;
             }

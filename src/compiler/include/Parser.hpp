@@ -42,6 +42,7 @@ namespace raccoon::compiler {
         std::unique_ptr<Stmt> varAssignment();
         std::unique_ptr<Stmt> functionDeclaration(const Token& name, bool isMutable);
         std::unique_ptr<Stmt> classDeclaration(const Token& name, bool isMutable);
+        std::unique_ptr<Stmt> objectDeclaration(const Token& name, bool isMutable);
         std::unique_ptr<BlockStmt> block();
         std::unique_ptr<Stmt> ret();
         std::unique_ptr<Stmt> ifStatement();

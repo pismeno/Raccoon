@@ -66,6 +66,16 @@ namespace raccoon::compiler::ast {
         void accept(Visitor& visitor) override;
     };
 
+    class MemberExpr : public Expr {
+      public:
+        std::string object;
+        std::string member;
+
+        MemberExpr(std::string object, std::string member) : object(std::move(object)), member(std::move(member)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
     class FunctionExpr : public Expr {
     public:
         std::vector<std::string> paramNames;
@@ -172,6 +182,22 @@ namespace raccoon::compiler::ast {
         ClassDecl(std::string name, bool declaredMutable, std::unique_ptr<Expr> initializer):
         declaredMutable(declaredMutable),
         name(std::move(name)),
+        initializer(std::move(initializer)) {}
+
+        void accept(Visitor& visitor) override;
+    };
+
+    class ObjectDecl : public Stmt {
+    public:
+        bool declaredMutable;
+        std::string name;
+        std::string className;
+        std::unique_ptr<Expr> initializer;
+
+        ObjectDecl(std::string name, bool declaredMutable, std::string className, std::unique_ptr<Expr> initializer):
+        declaredMutable(declaredMutable),
+        name(std::move(name)),
+        className(std::move(className)),
         initializer(std::move(initializer)) {}
 
         void accept(Visitor& visitor) override;

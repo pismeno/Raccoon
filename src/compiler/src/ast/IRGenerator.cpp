@@ -427,10 +427,10 @@ namespace raccoon::compiler::ast {
         builder->SetInsertPoint(mergeBlock);
     }
 
-    void IRGenerator::visit(ClassDecl& node) {
+    void IRGenerator::visit(ClassDecl &node) {
         std::string className = node.name;
-        llvm::StructType* structType = llvm::StructType::create(*context, className);
 
+        llvm::StructType *structType = llvm::StructType::create(*context, className);
         structMap[className] = structType;
 
         if (node.initializer) {
@@ -445,21 +445,41 @@ namespace raccoon::compiler::ast {
             this->currentStructFields.clear();
         }
 
-        llvm::Constant* constInit = llvm::Constant::getNullValue(structType);
-        std::string instName = className + "_instance";
-        auto* instanceGV = new llvm::GlobalVariable(
-                *module, structType, false, llvm::GlobalValue::ExternalLinkage, constInit, instName
+        llvm::FunctionType *factoryType = llvm::FunctionType::get(
+            builder->getPtrTy(),
+            {},
+            false
         );
 
-        llvm::PointerType* ptrToStruct = structType->getPointerTo();
-        llvm::Constant* instanceAsPtr = llvm::ConstantExpr::getBitCast(instanceGV, ptrToStruct);
-        std::string ptrName = className + "_ptr";
-        auto* pointerGV = new llvm::GlobalVariable(
-                *module, ptrToStruct, false, llvm::GlobalValue::ExternalLinkage, instanceAsPtr, ptrName
+        llvm::Function *factoryFunc = llvm::Function::Create(
+            factoryType,
+            llvm::Function::ExternalLinkage,
+            className,
+            module.get()
         );
 
-        VarInfo classInfo{className, PrimitiveType::Class, false, true, pointerGV};
-        varTable.define(className, classInfo);
+        llvm::BasicBlock *backupBlock = builder->GetInsertBlock();
+        llvm::BasicBlock *entry = llvm::BasicBlock::Create(*context, "entry", factoryFunc);
+        builder->SetInsertPoint(entry);
+
+        llvm::DataLayout dl(module.get());
+        uint64_t size = dl.getTypeAllocSize(structType);
+        llvm::Value *sizeVal = builder->getInt64(size);
+
+        llvm::FunctionCallee raccoonAllocFn = module->getOrInsertFunction(
+            "raccoon_alloc",
+            llvm::FunctionType::get(builder->getPtrTy(), {builder->getInt64Ty()}, false)
+        );
+
+        llvm::Value *allocatedPtr = builder->CreateCall(raccoonAllocFn, {sizeVal}, "alloc_obj");
+
+        builder->CreateRet(allocatedPtr);
+
+        if (backupBlock) {
+            builder->SetInsertPoint(backupBlock);
+        } else {
+            builder->ClearInsertionPoint();
+        }
     }
 
     void IRGenerator::visit(ClassExpr& node) {
@@ -467,18 +487,20 @@ namespace raccoon::compiler::ast {
             throw CompileError("Class expression must be visited as part of a class declaration.");
         }
 
+        size_t fieldIndex = 0;
         for (const auto& stmt : node.statements) {
             if (!stmt) continue;
 
             if (auto varDecl = dynamic_cast<VariableDecl*>(stmt.get())) {
-                 std::shared_ptr<Type> fieldType = stringToType(varDecl->type);
-                 llvm::Type* llvmFieldType = getLLVMType(fieldType);
-                 this->currentStructFields.push_back(llvmFieldType);
+              std::shared_ptr<Type> fieldType = stringToType(varDecl->type);
+              llvm::Type* llvmFieldType = getLLVMType(fieldType);
+
+              this->currentStructFields.push_back(llvmFieldType);
+
+              classFieldOffsets[this->currentStructName][varDecl->name] = fieldIndex;
+              fieldIndex++;
             }
         }
-
-        auto it = structMap.find(this->currentStructName);
-        if (it != structMap.end()) this->lastValue = nullptr;
     }
 
     llvm::Type* IRGenerator::getLLVMType(std::shared_ptr<Type> type) {

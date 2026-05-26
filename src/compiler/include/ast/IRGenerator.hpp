@@ -51,6 +51,8 @@ namespace raccoon::compiler::ast {
         std::string currentStructName = "";
         std::vector<llvm::Type*> currentStructFields;
 
+        std::unordered_map<std::string, std::unordered_map<std::string, unsigned>> classFieldOffsets;
+
         llvm::Type* getLLVMType(std::shared_ptr<Type> type);
     };
 

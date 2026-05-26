@@ -14,6 +14,10 @@ namespace raccoon::compiler::ast {
         visitor.visit(*this);
     }
 
+    void MemberExpr::accept(Visitor &visitor) {
+      // TODO
+    }
+
     void FunctionExpr::accept(Visitor& visitor) {
         visitor.visit(*this);
     }
@@ -52,6 +56,10 @@ namespace raccoon::compiler::ast {
 
     void ClassExpr::accept(Visitor& visitor) {
         visitor.visit(*this);
+    }
+
+    void ObjectDecl::accept(Visitor& visitor) {
+      // TODO
     }
 
     void ReturnStmt::accept(Visitor& visitor) {
