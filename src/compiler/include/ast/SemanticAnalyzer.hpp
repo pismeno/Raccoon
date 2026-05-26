@@ -24,6 +24,7 @@ namespace raccoon::compiler::ast {
         void visit(ExprStmt& node) override;
         void visit(LiteralExpr& node) override;
         void visit(VariableExpr& node) override;
+        void visit(MemberExpr& node) override;
         void visit(FunctionExpr& node) override;
         void visit(CallExpr& node) override;
         void visit(UnaryExpression& node) override;
@@ -34,6 +35,7 @@ namespace raccoon::compiler::ast {
         void visit(FunctionDecl& node) override;
         void visit(ClassDecl& node) override;
         void visit(ClassExpr& node) override;
+        void visit(ObjectDecl& node) override;
         void visit(ReturnStmt& node) override;
         void visit(DenStmt& node) override;
         void visit(IfStmt& node) override;

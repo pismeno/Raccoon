@@ -209,4 +209,24 @@ namespace raccoon::compiler::ast {
         indentLevel--;
     }
 
+    void Printer::visit(ObjectDecl& node) {
+        printIndent();
+        std::cout << "[ObjectDecl: name=" << node.name
+                  << ", className=" << node.className
+                  << ", declaredMutable=" << (node.declaredMutable ? "true" : "false")
+                  << "]" << std::endl;
+
+        if (node.initializer) {
+            indentLevel++;
+            node.initializer->accept(*this);
+            indentLevel--;
+        }
+    }
+
+    void Printer::visit(MemberExpr& node) {
+        printIndent();
+        std::cout << "[MemberExpr: object=" << node.object
+                  << ", member=" << node.member << "]" << std::endl;
+    }
+
 } // namespace raccoon::compiler::ast

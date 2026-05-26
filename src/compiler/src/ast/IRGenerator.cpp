@@ -503,6 +503,71 @@ namespace raccoon::compiler::ast {
         }
     }
 
+    void IRGenerator::visit(ObjectDecl &node) {
+        auto it = structMap.find(node.className);
+        if (it == structMap.end()) {
+            throw CompileError("Undefined class: " + node.className);
+        }
+
+        llvm::StructType* structType = it->second;
+        llvm::FunctionCallee factoryFn = module->getOrInsertFunction(
+            node.className,
+            llvm::FunctionType::get(builder->getPtrTy(), {}, false)
+        );
+
+        llvm::Value* objPtr = builder->CreateCall(factoryFn, {});
+
+        llvm::BasicBlock* backupBlock = builder->GetInsertBlock();
+        bool isGlobal = (backupBlock == nullptr);
+
+        if (isGlobal) {
+            auto* constInit = llvm::dyn_cast<llvm::Constant>(objPtr);
+            auto* globalVar = new llvm::GlobalVariable(
+                *module, builder->getPtrTy(), !node.declaredMutable,
+                llvm::GlobalValue::ExternalLinkage, constInit, node.name
+            );
+            VarInfo info{node.name, std::make_shared<ObjectType>(node.className), node.declaredMutable, true, globalVar};
+            varTable.define(node.name, info);
+        } else {
+            llvm::AllocaInst* alloca = builder->CreateAlloca(builder->getPtrTy(), nullptr, node.name);
+            builder->CreateStore(objPtr, alloca);
+            VarInfo info{node.name, std::make_shared<ObjectType>(node.className), node.declaredMutable, false, alloca};
+            varTable.define(node.name, info);
+        }
+
+        this->lastValue = objPtr;
+    }
+
+    void IRGenerator::visit(MemberExpr &node) {
+        std::optional<VarInfo> objInfo = varTable.lookup(node.object);
+        if (!objInfo) throw CompileError("Undefined object: " + node.object);
+
+        if (objInfo->type->getKind() != TypeKind::OBJECT) {
+            throw CompileError("Object '" + node.object + "' is not a class instance.");
+        }
+        auto objectType = std::static_pointer_cast<ObjectType>(objInfo->type);
+
+        auto it = classFieldOffsets.find(objectType->classVariableName);
+        if (it == classFieldOffsets.end()) {
+            throw CompileError("Class not found: " + objectType->classVariableName);
+        }
+
+        auto fieldIt = it->second.find(node.member);
+        if (fieldIt == it->second.end()) {
+            throw CompileError("Member '" + node.member + "' not found in object '" + node.object + "'.");
+        }
+
+        unsigned fieldIndex = fieldIt->second;
+        llvm::Value* objPtr = builder->CreateLoad(builder->getPtrTy(), objInfo->address, node.object);
+
+        llvm::Value* memberPtr = builder->CreateGEP(
+            builder->getInt8Ty(), objPtr, {builder->getInt64(fieldIndex * 8)}, node.member + "_ptr"
+        );
+
+        llvm::Type* memberType = builder->getInt32Ty(); // Fallback type
+        this->lastValue = builder->CreateLoad(memberType, memberPtr, node.member);
+    }
+
     llvm::Type* IRGenerator::getLLVMType(std::shared_ptr<Type> type) {
         if (!type) return builder->getVoidTy();
 

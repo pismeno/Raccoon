@@ -15,7 +15,7 @@ namespace raccoon::compiler::ast {
     }
 
     void MemberExpr::accept(Visitor &visitor) {
-      // TODO
+      visitor.visit(*this);
     }
 
     void FunctionExpr::accept(Visitor& visitor) {
@@ -59,7 +59,7 @@ namespace raccoon::compiler::ast {
     }
 
     void ObjectDecl::accept(Visitor& visitor) {
-      // TODO
+        visitor.visit(*this);
     }
 
     void ReturnStmt::accept(Visitor& visitor) {

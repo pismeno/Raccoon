@@ -248,7 +248,10 @@ namespace raccoon::compiler::ast {
 
         if (varTable.lookup(node.name)) throw ParseError("Name '" + node.name + "' already taken.");
 
-        varTable.define(node.name, PrimitiveType::Class, false);
+        std::vector<std::shared_ptr<Type>> emptyParams;
+        std::shared_ptr<Type> returnType = std::make_shared<ObjectType>(node.name);
+        auto factorySignature = FunctionType::make(returnType, emptyParams);
+        varTable.define(node.name, factorySignature, false);
 
         classRegistry[node.name] = { node.name, {} };
 
@@ -327,6 +330,53 @@ namespace raccoon::compiler::ast {
 
         node.thenBranch->accept(*this);
         if (node.elseBranch) node.elseBranch->accept(*this);
+    }
+
+    void SemanticAnalyzer::visit(ObjectDecl &node) {
+        if (!varTable.isInDen()) {
+            throw ParseError("Object declarations only allowed inside a den.");
+        }
+
+        if (varTable.lookup(node.name)) {
+            throw ParseError("Name '" + node.name + "' already taken.");
+        }
+
+        auto classIt = classRegistry.find(node.className);
+        if (classIt == classRegistry.end()) {
+            throw ParseError("Undefined class: " + node.className);
+        }
+
+        auto objType = std::make_shared<ObjectType>(node.className);
+        varTable.define(node.name, objType, node.declaredMutable);
+        this->lastType = objType;
+
+        if (node.initializer) {
+            node.initializer->accept(*this);
+        }
+    }
+
+    void SemanticAnalyzer::visit(MemberExpr &node) {
+        std::optional<VarInfo> objInfo = varTable.lookup(node.object);
+        if (!objInfo) {
+            throw ParseError("Undefined object: " + node.object);
+        }
+
+        if (objInfo->type->getKind() != TypeKind::OBJECT) {
+            throw ParseError("Object '" + node.object + "' is not a class instance.");
+        }
+
+        auto objType = std::static_pointer_cast<ObjectType>(objInfo->type);
+        auto classIt = classRegistry.find(objType->classVariableName);
+        if (classIt == classRegistry.end()) {
+            throw ParseError("Object refers to undefined class: " + objType->classVariableName);
+        }
+
+        auto memberIt = classIt->second.members.find(node.member);
+        if (memberIt == classIt->second.members.end()) {
+            throw ParseError("Member '" + node.member + "' not found in class '" + objType->classVariableName + "'.");
+        }
+
+        this->lastType = memberIt->second.type;
     }
 
     std::shared_ptr<Type> SemanticAnalyzer::checkType(const std::string& declaredTypeStr) {
