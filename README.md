@@ -91,3 +91,21 @@ if age > 19 {
 den math::geometry {
     let PI be float = 3.14;
 };
+```
+### Classes
+classes only support fields for now, all of them are public, when you create an object of a class, 
+you get a handle, that is tracked by the GC
+```raccoon
+let Animal be class = class {
+    let age be int;
+    let id be int;
+};
+
+let main be () int = () {
+    let myDog be obj Animal = Animal();
+    myDog.age = 5;
+    myDog.id = 0;
+    
+    return 0;
+};
+```
