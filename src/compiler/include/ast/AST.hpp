@@ -5,7 +5,9 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include <memory>
 #include "Operation.h"
+#include "Type.hpp"
 
 namespace raccoon::compiler::ast {
 
@@ -20,8 +22,9 @@ namespace raccoon::compiler::ast {
         virtual void accept(Visitor& visitor) = 0;
     };
 
-    class Expr: public ASTNode {
+    class Expr : public ASTNode {
     public:
+        std::shared_ptr<Type> evaluatedType = nullptr;
         virtual ~Expr() = default;
     };
 
@@ -68,10 +71,10 @@ namespace raccoon::compiler::ast {
 
     class MemberExpr : public Expr {
       public:
-        std::string object;
+        std::unique_ptr<Expr> object;
         std::string member;
 
-        MemberExpr(std::string object, std::string member) : object(std::move(object)), member(std::move(member)) {}
+        MemberExpr(std::unique_ptr<Expr> object, std::string member) : object(std::move(object)), member(std::move(member)) {}
 
         void accept(Visitor& visitor) override;
     };
@@ -155,12 +158,12 @@ namespace raccoon::compiler::ast {
     };
 
     class MemberAssign : public Stmt {
-    public:
-        std::string object;
+      public:
+        std::unique_ptr<Expr> object;
         std::string member;
         std::unique_ptr<Expr> value;
 
-        MemberAssign(std::string object, std::string member, std::unique_ptr<Expr> value):
+        MemberAssign(std::unique_ptr<Expr> object, std::string member, std::unique_ptr<Expr> value):
         object(std::move(object)),
         member(std::move(member)),
         value(std::move(value)) {}

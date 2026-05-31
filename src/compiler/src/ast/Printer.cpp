@@ -96,12 +96,22 @@ namespace raccoon::compiler::ast {
         std::cout << ")\n";
     }
 
-    void Printer::visit(MemberAssign& node) {
+    void Printer::visit(MemberAssign &node) {
         printIndent();
-        std::cout << "MemberAssign(" << node.object << "." << node.member << " =\n";
+        std::cout << "MemberAssign(\n";
+        indentLevel++;
+        printIndent();
+        std::cout << "object:\n";
+        indentLevel++;
+        node.object->accept(*this);
+        indentLevel--;
+        printIndent();
+        std::cout << "member: " << node.member << "\n";
+        printIndent();
+        std::cout << "value:\n";
         indentLevel++;
         node.value->accept(*this);
-        indentLevel--;
+        indentLevel -= 2;
         printIndent();
         std::cout << ")\n";
     }
@@ -235,10 +245,17 @@ namespace raccoon::compiler::ast {
         }
     }
 
-    void Printer::visit(MemberExpr& node) {
+    void Printer::visit(MemberExpr &node) {
         printIndent();
-        std::cout << "[MemberExpr: object=" << node.object
-                  << ", member=" << node.member << "]" << std::endl;
+        std::cout << "[MemberExpr: member=" << node.member << "\n";
+        indentLevel++;
+        printIndent();
+        std::cout << "object:\n";
+        indentLevel++;
+        node.object->accept(*this);
+        indentLevel -= 2;
+        printIndent();
+        std::cout << "]\n";
     }
 
 } // namespace raccoon::compiler::ast

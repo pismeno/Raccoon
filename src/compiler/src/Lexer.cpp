@@ -45,7 +45,7 @@ namespace raccoon::compiler {
 
             if (isalpha(c)) {
                 std::string word = "";
-                while (cursor < source.length() && isalnum(source[cursor]) || source[cursor] == ':') {
+                while (cursor < source.length() && (isalnum(source[cursor]) || source[cursor] == ':')) {
                     word += source[cursor++];
                 }
 

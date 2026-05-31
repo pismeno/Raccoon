@@ -131,13 +131,13 @@ namespace raccoon::compiler {
     }
 
     std::unique_ptr<Stmt> Parser::memberAssignment() {
-        Token object = consume(TokenType::IDENTIFIER, "Expected object name.");
+        std::unique_ptr<Expr> object = std::make_unique<VariableExpr>(consume(TokenType::IDENTIFIER, "Expected object name.").lexeme);
         consume(TokenType::DOT, "Expected '.' after object name.");
         Token member = consume(TokenType::IDENTIFIER, "Expected member name.");
         consume(TokenType::ASSIGN, "Expected '=' after member name.");
         std::unique_ptr<Expr> value = expression();
         consume(TokenType::SEMICOLON, "Expected ';' after member assignment.");
-        return std::make_unique<MemberAssign>(object.lexeme, member.lexeme, std::move(value));
+        return std::make_unique<MemberAssign>(std::move(object), member.lexeme, std::move(value));
     }
 
     std::unique_ptr<Stmt> Parser::functionDeclaration(const Token& name, bool isMutable) {
@@ -145,12 +145,23 @@ namespace raccoon::compiler {
         std::vector<std::string> paramTypes;
         if (!check(TokenType::RPAREN)) {
             do {
-                paramTypes.push_back(consume(TokenType::IDENTIFIER, "Expected parameter type/name.").lexeme);
+                if (match(TokenType::OBJECT)) {
+                    Token t = consume(TokenType::IDENTIFIER, "Expected parameter class name.");
+                    paramTypes.push_back("obj " + t.lexeme);
+                } else {
+                    paramTypes.push_back(consume(TokenType::IDENTIFIER, "Expected parameter type/name.").lexeme);
+                }
             } while (match(TokenType::COMMA));
         }
         consume(TokenType::RPAREN, "Expected ')' after function type parameters.");
 
-        Token returnType = consume(TokenType::IDENTIFIER, "Expected return type.");
+        std::string returnType;
+        if (match(TokenType::OBJECT)) {
+            Token t = consume(TokenType::IDENTIFIER, "Expected object class name.");
+            returnType = "obj " + t.lexeme;
+        } else {
+            returnType = consume(TokenType::IDENTIFIER, "Expected return type.").lexeme;
+        }
 
         std::unique_ptr<Expr> initializer = nullptr;
         if (match(TokenType::ASSIGN)) {
@@ -158,7 +169,7 @@ namespace raccoon::compiler {
         }
 
         consume(TokenType::SEMICOLON, "Expected ';' after function declaration.");
-        return std::make_unique<FunctionDecl>(name.lexeme, isMutable, paramTypes, returnType.lexeme, std::move(initializer));
+        return std::make_unique<FunctionDecl>(name.lexeme, isMutable, paramTypes, returnType, std::move(initializer));
     }
 
     std::unique_ptr<Stmt> Parser::classDeclaration(const Token& name, bool isMutable) {
@@ -345,15 +356,19 @@ namespace raccoon::compiler {
 
         if (match(TokenType::IDENTIFIER)) {
             std::string name = previous().lexeme;
+            std::unique_ptr<Expr> expr;
             if (match(TokenType::LPAREN)) {
-                return finishCall(name);
+                expr = finishCall(name);
+            } else {
+                expr = std::make_unique<VariableExpr>(name);
             }
-            if (match(TokenType::DOT)) {
-                std::string object = name;
+
+            while (match(TokenType::DOT)) {
                 std::string member = consume(TokenType::IDENTIFIER, "Expected property name after '.'.").lexeme;
-                return std::make_unique<MemberExpr>(object, member);
+                expr = std::make_unique<MemberExpr>(std::move(expr), member);
             }
-            return std::make_unique<VariableExpr>(name);
+
+            return expr;
         }
 
         if (match(TokenType::LPAREN)) {

@@ -325,10 +325,14 @@ namespace raccoon::compiler::ast {
         if (node.value) node.value->accept(*this);
         llvm::Value* value = this->lastValue;
 
-        std::optional<VarInfo> objInfo = varTable.lookup(node.object);
-        if (!objInfo) throw CompileError("Undefined object: " + node.object);
+        node.object->accept(*this);
+        llvm::Value* objPtr = this->lastValue;
 
-        auto objectType = std::static_pointer_cast<ObjectType>(objInfo->type);
+        if (!node.object->evaluatedType || node.object->evaluatedType->getKind() != TypeKind::OBJECT) {
+             throw CompileError("Internal error: MemberAssign object has no evaluated object type.");
+        }
+
+        auto objectType = std::static_pointer_cast<ObjectType>(node.object->evaluatedType);
 
         auto it = classFieldOffsets.find(objectType->classVariableName);
         if (it == classFieldOffsets.end()) {
@@ -337,12 +341,10 @@ namespace raccoon::compiler::ast {
 
         auto fieldIt = it->second.find(node.member);
         if (fieldIt == it->second.end()) {
-            throw CompileError("Member '" + node.member + "' not found in object '" + node.object + "'.");
+            throw CompileError("Member '" + node.member + "' not found.");
         }
 
         unsigned fieldIndex = fieldIt->second;
-        // The object itself is likely stored as a pointer, so we load that pointer first
-        llvm::Value* objPtr = builder->CreateLoad(builder->getPtrTy(), objInfo->address, node.object);
 
         llvm::Value* memberPtr = builder->CreateGEP(
             builder->getInt8Ty(), objPtr, {builder->getInt32(fieldIndex * 8)}, node.member + "_ptr"
@@ -521,6 +523,14 @@ namespace raccoon::compiler::ast {
 
               classFieldOffsets[this->currentStructName][varDecl->name] = fieldIndex;
               fieldIndex++;
+            } else if (auto objDecl = dynamic_cast<ObjectDecl*>(stmt.get())) {
+              std::shared_ptr<Type> fieldType = std::make_shared<ObjectType>(objDecl->className);
+              llvm::Type* llvmFieldType = getLLVMType(fieldType);
+
+              this->currentStructFields.push_back(llvmFieldType);
+
+              classFieldOffsets[this->currentStructName][objDecl->name] = fieldIndex;
+              fieldIndex++;
             }
         }
     }
@@ -561,13 +571,14 @@ namespace raccoon::compiler::ast {
     }
 
     void IRGenerator::visit(MemberExpr &node) {
-        std::optional<VarInfo> objInfo = varTable.lookup(node.object);
-        if (!objInfo) throw CompileError("Undefined object: " + node.object);
+        node.object->accept(*this);
+        llvm::Value* objPtr = this->lastValue;
 
-        if (objInfo->type->getKind() != TypeKind::OBJECT) {
-            throw CompileError("Object '" + node.object + "' is not a class instance.");
+        if (!node.object->evaluatedType || node.object->evaluatedType->getKind() != TypeKind::OBJECT) {
+            throw CompileError("Internal error: MemberExpr object has no evaluated object type.");
         }
-        auto objectType = std::static_pointer_cast<ObjectType>(objInfo->type);
+
+        auto objectType = std::static_pointer_cast<ObjectType>(node.object->evaluatedType);
 
         auto it = classFieldOffsets.find(objectType->classVariableName);
         if (it == classFieldOffsets.end()) {
@@ -576,18 +587,21 @@ namespace raccoon::compiler::ast {
 
         auto fieldIt = it->second.find(node.member);
         if (fieldIt == it->second.end()) {
-            throw CompileError("Member '" + node.member + "' not found in object '" + node.object + "'.");
+            throw CompileError("Member '" + node.member + "' not found.");
         }
 
         unsigned fieldIndex = fieldIt->second;
-        llvm::Value* objPtr = builder->CreateLoad(builder->getPtrTy(), objInfo->address, node.object);
 
+        // Get pointer to the member
         llvm::Value* memberPtr = builder->CreateGEP(
-            builder->getInt8Ty(), objPtr, {builder->getInt64(fieldIndex * 8)}, node.member + "_ptr"
+            builder->getInt8Ty(), objPtr, {builder->getInt32(fieldIndex * 8)}, node.member + "_ptr"
         );
 
-        llvm::Type* memberType = builder->getInt32Ty(); // Fallback type
-        this->lastValue = builder->CreateLoad(memberType, memberPtr, node.member);
+        llvm::StructType* structType = structMap[objectType->classVariableName];
+        llvm::Type* memberType = structType->getElementType(fieldIndex);
+
+        llvm::Value* typedMemberPtr = builder->CreateBitCast(memberPtr, builder->getPtrTy());
+        this->lastValue = builder->CreateLoad(memberType, typedMemberPtr, node.member + "_val");
     }
 
     llvm::Type* IRGenerator::getLLVMType(std::shared_ptr<Type> type) {
@@ -599,6 +613,7 @@ namespace raccoon::compiler::ast {
             case TypeKind::FLOAT:    return builder->getDoubleTy();
             case TypeKind::BOOL:     return builder->getInt1Ty();
             case TypeKind::FUNCTION: return builder->getPtrTy();
+            case TypeKind::OBJECT:   return builder->getPtrTy();
             default:                 return builder->getInt32Ty();
         }
     }

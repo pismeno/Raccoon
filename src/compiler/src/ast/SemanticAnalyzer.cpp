@@ -23,6 +23,7 @@ namespace raccoon::compiler::ast {
         std::optional<VarInfo> varInfo = varTable.lookup(node.name);
         if (!varInfo) throw ParseError("Undefined variable: " + node.name);
         this->lastType = varInfo->type;
+        node.evaluatedType = varInfo->type;
     }
 
     void SemanticAnalyzer::visit(FunctionExpr &node) {
@@ -208,15 +209,14 @@ namespace raccoon::compiler::ast {
         if (node.value) node.value->accept(*this);
         std::shared_ptr<Type> rhsType = this->lastType;
 
-        std::optional<VarInfo> objInfo = varTable.lookup(node.object);
-        if (!objInfo) throw ParseError("Undefined object: " + node.object);
-        if (currentExpectedFunctionType == nullptr) throw ParseError("Cannot assign to member of " + node.object + " outside functions.");
-
-        if (objInfo->type->getKind() != TypeKind::OBJECT) {
-            throw ParseError("Object '" + node.object + "' is not a class instance.");
+        node.object->accept(*this);
+        if (!this->lastType || this->lastType->getKind() != TypeKind::OBJECT) {
+            throw ParseError("Left side of member assignment is not an object.");
         }
 
-        auto objType = std::static_pointer_cast<ObjectType>(objInfo->type);
+        if (currentExpectedFunctionType == nullptr) throw ParseError("Cannot assign to member outside functions.");
+
+        auto objType = std::static_pointer_cast<ObjectType>(this->lastType);
         auto classIt = classRegistry.find(objType->classVariableName);
         if (classIt == classRegistry.end()) {
             throw ParseError("Object refers to undefined class: " + objType->classVariableName);
@@ -230,6 +230,7 @@ namespace raccoon::compiler::ast {
         if (!memberIt->second.isMutable) {
             throw ParseError("Cannot assign to immutable member: " + node.member);
         }
+
 
         if (!(*rhsType == *memberIt->second.type)) {
             throw ParseError("Type mismatch in assignment to member '" + node.member + "'.");
@@ -316,6 +317,8 @@ namespace raccoon::compiler::ast {
             for (const auto& arg : node.args) {
                 if (arg) arg->accept(*this);
             }
+            this->lastType = PrimitiveType::Void;
+            node.evaluatedType = this->lastType;
             return;
         }
 
@@ -345,6 +348,9 @@ namespace raccoon::compiler::ast {
                                  " does not match expected type.");
             }
         }
+
+        this->lastType = funcType->returnType;
+        node.evaluatedType = this->lastType;
     }
 
     void SemanticAnalyzer::visit(DenStmt &node) {
@@ -368,39 +374,56 @@ namespace raccoon::compiler::ast {
     }
 
     void SemanticAnalyzer::visit(ObjectDecl &node) {
-        if (!varTable.isInDen()) {
-            throw ParseError("Object declarations only allowed inside a den.");
-        }
-
-        if (varTable.lookup(node.name)) {
-            throw ParseError("Name '" + node.name + "' already taken.");
-        }
-
         auto classIt = classRegistry.find(node.className);
         if (classIt == classRegistry.end()) {
             throw ParseError("Undefined class: " + node.className);
         }
 
         auto objType = std::make_shared<ObjectType>(node.className);
-        varTable.define(node.name, objType, node.declaredMutable);
-        this->lastType = objType;
 
-        if (node.initializer) {
-            node.initializer->accept(*this);
+        if (currentClassValue) {
+            if (currentClassValue->members.count(node.name)) {
+                throw ParseError("Member '" + node.name + "' already defined in class " + currentClassValue->name);
+            }
+
+            size_t fieldIndex = currentClassValue->members.size();
+            currentClassValue->members[node.name] = { objType, fieldIndex, node.declaredMutable };
+
+            if (node.initializer) {
+                node.initializer->accept(*this);
+                if (!(*this->lastType == *objType)) {
+                    throw ParseError("Type mismatch in field '" + node.name + "' initializer.");
+                }
+            }
+        } else {
+            if (!varTable.isInDen()) {
+                throw ParseError("Object declarations only allowed inside a den.");
+            }
+
+            if (varTable.lookup(node.name)) {
+                throw ParseError("Name '" + node.name + "' already taken.");
+            }
+
+            varTable.define(node.name, objType, node.declaredMutable);
+
+            if (node.initializer) {
+                node.initializer->accept(*this);
+                if (!(*this->lastType == *objType)) {
+                    throw ParseError("Type mismatch in object '" + node.name + "' initializer.");
+                }
+            }
         }
+
+        this->lastType = objType;
     }
 
     void SemanticAnalyzer::visit(MemberExpr &node) {
-        std::optional<VarInfo> objInfo = varTable.lookup(node.object);
-        if (!objInfo) {
-            throw ParseError("Undefined object: " + node.object);
+        node.object->accept(*this);
+        if (!this->lastType || this->lastType->getKind() != TypeKind::OBJECT) {
+            throw ParseError("Left side of member access is not an object.");
         }
 
-        if (objInfo->type->getKind() != TypeKind::OBJECT) {
-            throw ParseError("Object '" + node.object + "' is not a class instance.");
-        }
-
-        auto objType = std::static_pointer_cast<ObjectType>(objInfo->type);
+        auto objType = std::static_pointer_cast<ObjectType>(this->lastType);
         auto classIt = classRegistry.find(objType->classVariableName);
         if (classIt == classRegistry.end()) {
             throw ParseError("Object refers to undefined class: " + objType->classVariableName);
@@ -412,10 +435,18 @@ namespace raccoon::compiler::ast {
         }
 
         this->lastType = memberIt->second.type;
+        node.evaluatedType = this->lastType;
     }
 
-    std::shared_ptr<Type> SemanticAnalyzer::checkType(const std::string& declaredTypeStr) {
-        std::shared_ptr<Type> declaredType = stringToType(declaredTypeStr);
+    std::shared_ptr<raccoon::compiler::ast::Type> SemanticAnalyzer::checkType(const std::string& declaredTypeStr) {
+        if (declaredTypeStr.rfind("obj ", 0) == 0) {
+            std::string className = declaredTypeStr.substr(4);
+            if (classRegistry.find(className) == classRegistry.end()) {
+                throw ParseError("Undefined class: " + className);
+            }
+            return std::make_shared<ObjectType>(className);
+        }
+        std::shared_ptr<raccoon::compiler::ast::Type> declaredType = stringToType(declaredTypeStr);
         if (declaredType == nullptr) throw ParseError("Unknown type: " + declaredTypeStr);
         return declaredType;
     }

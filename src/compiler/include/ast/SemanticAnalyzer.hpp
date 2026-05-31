@@ -50,7 +50,7 @@ namespace raccoon::compiler::ast {
         std::unordered_map<std::string, ClassValue> classRegistry;
         ClassValue* currentClassValue = nullptr;
 
-        static std::shared_ptr<Type> checkType(const std::string& declaredTypeStr);
+        std::shared_ptr<Type> checkType(const std::string& declaredTypeStr);
     };
 
 } // namespace raccoon::compiler::ast
