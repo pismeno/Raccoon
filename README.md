@@ -12,6 +12,14 @@ libs: LLVM, ZLIB, Zstd, CLI11
 Runtime:  
 language: C
 
+## How to use?
+- Install the compiler and runtime.
+- Create a file with the extension `.trash` and write your code.
+- Now you can:
+  - Run the file using `raccoon run {file name}`
+  - Compile the file using `raccoon compile {file name}`
+  - Debug print the compilation using `raccoon print {file name}`
+
 ## Raccoon Syntax
 - [Basics](#basics)
 - [Variables & Constants](#variables--constants)
